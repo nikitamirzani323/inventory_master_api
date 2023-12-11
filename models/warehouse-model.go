@@ -16,10 +16,12 @@ import (
 
 const database_warehouse_local = configs.DB_tbl_mst_warehouse
 
-func Fetch_warehouseHome(idbranch string) (helpers.Response, error) {
+func Fetch_warehouseHome(idbranch string) (helpers.Responsewarehouse, error) {
 	var obj entities.Model_warehouse
 	var arraobj []entities.Model_warehouse
-	var res helpers.Response
+	var objbranch entities.Model_branchshare
+	var arraobjbranch []entities.Model_branchshare
+	var res helpers.Responsewarehouse
 	msg := "Data Not Found"
 	con := db.CreateCon()
 	ctx := context.Background()
@@ -78,9 +80,34 @@ func Fetch_warehouseHome(idbranch string) (helpers.Response, error) {
 	}
 	defer row.Close()
 
+	sql_selectbranch := `SELECT 
+			idbranch, nmbranch  
+			FROM ` + configs.DB_tbl_mst_branch + ` 
+			WHERE statusbranch = 'Y' 
+			ORDER BY nmbranch ASC    
+	`
+	rowbranch, errbranch := con.QueryContext(ctx, sql_selectbranch)
+	helpers.ErrorCheck(errbranch)
+	for rowbranch.Next() {
+		var (
+			idbranch_db, nmbranch_db string
+		)
+
+		errbranch = rowbranch.Scan(&idbranch_db, &nmbranch_db)
+
+		helpers.ErrorCheck(errbranch)
+
+		objbranch.Branch_id = idbranch_db
+		objbranch.Branch_name = nmbranch_db
+		arraobjbranch = append(arraobjbranch, objbranch)
+		msg = "Success"
+	}
+	defer rowbranch.Close()
+
 	res.Status = fiber.StatusOK
 	res.Message = msg
 	res.Record = arraobj
+	res.Listbranch = arraobjbranch
 	res.Time = time.Since(start).String()
 
 	return res, nil

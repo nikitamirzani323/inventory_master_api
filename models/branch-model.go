@@ -26,7 +26,7 @@ func Fetch_branchHome() (helpers.Response, error) {
 	start := time.Now()
 
 	sql_select := `SELECT 
-			idbranch , nmbranch, 
+			idbranch , nmbranch, statusbranch,  
 			createbranch, to_char(COALESCE(createdatebranch,now()), 'YYYY-MM-DD HH24:MI:SS'), 
 			updatebranch, to_char(COALESCE(updatedatebranch,now()), 'YYYY-MM-DD HH24:MI:SS') 
 			FROM ` + database_branch_local + `  
@@ -36,25 +36,31 @@ func Fetch_branchHome() (helpers.Response, error) {
 	helpers.ErrorCheck(err)
 	for row.Next() {
 		var (
-			idbranch_db, nmbranch_db                                                   string
+			idbranch_db, nmbranch_db, statusbranch_db                                  string
 			createbranch_db, createdatebranch_db, updatebranch_db, updatedatebranch_db string
 		)
 
-		err = row.Scan(&idbranch_db, &nmbranch_db,
+		err = row.Scan(&idbranch_db, &nmbranch_db, &statusbranch_db,
 			&createbranch_db, &createdatebranch_db, &updatebranch_db, &updatedatebranch_db)
 
 		helpers.ErrorCheck(err)
 		create := ""
 		update := ""
+		status_css := configs.STATUS_CANCEL
 		if createbranch_db != "" {
 			create = createbranch_db + ", " + createdatebranch_db
 		}
 		if updatebranch_db != "" {
 			update = updatebranch_db + ", " + updatedatebranch_db
 		}
+		if statusbranch_db == "Y" {
+			status_css = configs.STATUS_COMPLETE
+		}
 
 		obj.Branch_id = idbranch_db
 		obj.Branch_name = nmbranch_db
+		obj.Branch_status = statusbranch_db
+		obj.Branch_status_css = status_css
 		obj.Branch_create = create
 		obj.Branch_update = update
 		arraobj = append(arraobj, obj)
@@ -69,7 +75,7 @@ func Fetch_branchHome() (helpers.Response, error) {
 
 	return res, nil
 }
-func Save_branch(admin, idrecord, name, sData string) (helpers.Response, error) {
+func Save_branch(admin, idrecord, name, status, sData string) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
 	tglnow, _ := goment.New()
@@ -82,15 +88,15 @@ func Save_branch(admin, idrecord, name, sData string) (helpers.Response, error) 
 			sql_insert := `
 				insert into
 				` + database_branch_local + ` (
-					idbranch , nmbranch, 
+					idbranch , nmbranch, statusbranch, 
 					createbranch, createdatebranch 
 				) values (
-					$1, $2,    
-					$3, $4  
+					$1, $2, $3,     
+					$4, $5   
 				)
 			`
 			flag_insert, msg_insert := Exec_SQL(sql_insert, database_branch_local, "INSERT",
-				strings.ToUpper(idrecord), name,
+				strings.ToUpper(idrecord), name, status,
 				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
 			if flag_insert {
@@ -105,13 +111,13 @@ func Save_branch(admin, idrecord, name, sData string) (helpers.Response, error) 
 		sql_update := `
 				UPDATE 
 				` + database_branch_local + `  
-				SET nmbranch=$1,
-				updatebranch=$2, updatedatebranch=$3     
-				WHERE idbranch=$4    
+				SET nmbranch=$1, statusbranch=$2, 
+				updatebranch=$3, updatedatebranch=$4     
+				WHERE idbranch=$5     
 			`
 
 		flag_update, msg_update := Exec_SQL(sql_update, database_branch_local, "UPDATE",
-			name,
+			name, status,
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
 
 		if flag_update {

@@ -47,10 +47,13 @@ func Warehousehome(c *fiber.Ctx) error {
 
 	var obj entities.Model_warehouse
 	var arraobj []entities.Model_warehouse
+	var objbranch entities.Model_branchshare
+	var arraobjbranch []entities.Model_branchshare
 	render_page := time.Now()
 	resultredis, flag := helpers.GetRedis(Fieldwarehouse_home_redis + "_" + strings.ToUpper(client.Branch_id))
 	jsonredis := []byte(resultredis)
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
+	listbranch_RD, _, _, _ := jsonparser.Get(jsonredis, "listbranch")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		warehouse_id, _ := jsonparser.GetString(value, "warehouse_id")
 		warehouse_idbranch, _ := jsonparser.GetString(value, "warehouse_idbranch")
@@ -77,7 +80,14 @@ func Warehousehome(c *fiber.Ctx) error {
 		obj.Warehouse_update = warehouse_update
 		arraobj = append(arraobj, obj)
 	})
+	jsonparser.ArrayEach(listbranch_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		branch_id, _ := jsonparser.GetString(value, "branch_id")
+		branch_name, _ := jsonparser.GetString(value, "branch_name")
 
+		objbranch.Branch_id = branch_id
+		objbranch.Branch_name = branch_name
+		arraobjbranch = append(arraobjbranch, objbranch)
+	})
 	if !flag {
 		result, err := models.Fetch_warehouseHome(client.Branch_id)
 		if err != nil {
@@ -94,10 +104,11 @@ func Warehousehome(c *fiber.Ctx) error {
 	} else {
 		fmt.Println("WAREHOUSE CACHE")
 		return c.JSON(fiber.Map{
-			"status":  fiber.StatusOK,
-			"message": "Success",
-			"record":  arraobj,
-			"time":    time.Since(render_page).String(),
+			"status":     fiber.StatusOK,
+			"message":    "Success",
+			"record":     arraobj,
+			"listbranch": arraobjbranch,
+			"time":       time.Since(render_page).String(),
 		})
 	}
 }

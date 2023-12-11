@@ -25,11 +25,15 @@ func Branchhome(c *fiber.Ctx) error {
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		branch_id, _ := jsonparser.GetString(value, "branch_id")
 		branch_name, _ := jsonparser.GetString(value, "branch_name")
+		branch_status, _ := jsonparser.GetString(value, "branch_status")
+		branch_status_css, _ := jsonparser.GetString(value, "branch_status_css")
 		branch_create, _ := jsonparser.GetString(value, "branch_create")
 		branch_update, _ := jsonparser.GetString(value, "branch_update")
 
 		obj.Branch_id = branch_id
 		obj.Branch_name = branch_name
+		obj.Branch_status = branch_status
+		obj.Branch_status_css = branch_status_css
 		obj.Branch_create = branch_create
 		obj.Branch_update = branch_update
 		arraobj = append(arraobj, obj)
@@ -95,7 +99,7 @@ func BranchSave(c *fiber.Ctx) error {
 	// admin, idrecord, name, sData string
 	result, err := models.Save_branch(
 		client_admin,
-		client.Branch_id, client.Branch_name, client.Sdata)
+		client.Branch_id, client.Branch_name, client.Branch_status, client.Sdata)
 	if err != nil {
 		c.Status(fiber.StatusBadRequest)
 		return c.JSON(fiber.Map{
