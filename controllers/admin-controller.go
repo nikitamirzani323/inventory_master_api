@@ -13,7 +13,7 @@ import (
 	"github.com/nikitamirzani323/BTANGKAS_SUPER_API/models"
 )
 
-const Fieldadmin_home_redis = "LISTADMIN_BACKEND_ISBPANEL"
+const Fieldadmin_home_redis = "LISTADMIN_BACKEND_INVENTORY"
 
 func Adminhome(c *fiber.Ctx) error {
 	var obj entities.Responseredis_adminhome
