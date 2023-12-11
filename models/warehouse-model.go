@@ -27,15 +27,18 @@ func Fetch_warehouseHome(idbranch string) (helpers.Responsewarehouse, error) {
 	ctx := context.Background()
 	start := time.Now()
 
-	sql_select := `SELECT 
-			A.idwarehouse , A.idbranch, B.nmbranch, 
-			A.nmwarehouse , A.alamatwarehouse, A.phone1warehouse, A.phone2warehouse, A.statuswarehouse, 
-			A.createwarehouse, to_char(COALESCE(A.createdatewarehouse,now()), 'YYYY-MM-DD HH24:MI:SS'), 
-			A.updatewarehouse, to_char(COALESCE(A.updatedatewarehouse,now()), 'YYYY-MM-DD HH24:MI:SS') 
-			FROM ` + database_warehouse_local + ` AS A   
-			JOIN ` + configs.DB_tbl_mst_branch + ` AS B ON B.idbranch = A.idbranch    
-			WHERE A.idbranch=$1 
-			ORDER BY A.createdatewarehouse DESC   `
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "A.idwarehouse , A.idbranch, B.nmbranch,  "
+	sql_select += "A.nmwarehouse , A.alamatwarehouse, A.phone1warehouse, A.phone2warehouse, A.statuswarehouse,   "
+	sql_select += "A.createwarehouse, to_char(COALESCE(A.createdatewarehouse,now()), 'YYYY-MM-DD HH24:MI:SS'),   "
+	sql_select += "A.updatewarehouse, to_char(COALESCE(A.updatedatewarehouse,now()), 'YYYY-MM-DD HH24:MI:SS')   "
+	sql_select += "FROM " + database_warehouse_local + " AS A "
+	sql_select += "JOIN " + configs.DB_tbl_mst_branch + " AS B ON B.idbranch = A.idbranch "
+	if idbranch != "" {
+		sql_select += "WHERE A.idbranch='" + idbranch + "' "
+	}
+	sql_select += "ORDER BY A.createdatewarehouse DESC "
 
 	row, err := con.QueryContext(ctx, sql_select)
 	helpers.ErrorCheck(err)

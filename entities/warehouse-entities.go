@@ -25,5 +25,5 @@ type Controller_warehousesave struct {
 	Warehouse_status   string `json:"warehouse_status" validate:"required"`
 }
 type Controller_warehouse struct {
-	Branch_id string `json:"branch_id" validate:"required"`
+	Branch_id string `json:"branch_id" `
 }
