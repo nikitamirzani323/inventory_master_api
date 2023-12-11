@@ -23,7 +23,7 @@ func Branchhome(c *fiber.Ctx) error {
 	jsonredis := []byte(resultredis)
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		branch_id, _ := jsonparser.GetString(value, "branch_name")
+		branch_id, _ := jsonparser.GetString(value, "branch_id")
 		branch_name, _ := jsonparser.GetString(value, "branch_name")
 		branch_create, _ := jsonparser.GetString(value, "branch_create")
 		branch_update, _ := jsonparser.GetString(value, "branch_update")
