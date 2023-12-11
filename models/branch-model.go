@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -76,7 +77,7 @@ func Save_branch(admin, idrecord, name, sData string) (helpers.Response, error) 
 	flag := false
 
 	if sData == "New" {
-		flag = CheckDB(database_branch_local, "idbranch", idrecord)
+		flag = CheckDB(database_branch_local, "idbranch", strings.ToUpper(idrecord))
 		if !flag {
 			sql_insert := `
 				insert into
@@ -89,7 +90,7 @@ func Save_branch(admin, idrecord, name, sData string) (helpers.Response, error) 
 				)
 			`
 			flag_insert, msg_insert := Exec_SQL(sql_insert, database_branch_local, "INSERT",
-				idrecord, name,
+				strings.ToUpper(idrecord), name,
 				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
 			if flag_insert {
