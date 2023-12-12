@@ -21,6 +21,13 @@ type Responsewarehouse struct {
 	Listbranch interface{} `json:"listbranch"`
 	Time       string      `json:"time"`
 }
+type Responsestoragebin struct {
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Record  interface{} `json:"record"`
+	Listuom interface{} `json:"listuom"`
+	Time    string      `json:"time"`
+}
 
 type Responselistpatterndetail struct {
 	Status    int         `json:"status"`

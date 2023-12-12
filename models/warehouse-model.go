@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -177,10 +178,12 @@ func Fetch_warehouseStorage(idwarehouse string) (helpers.Response, error) {
 
 	return res, nil
 }
-func Fetch_warehouseStorageBin(idstorage string) (helpers.Response, error) {
+func Fetch_warehouseStorageBin(idstorage string) (helpers.Responsestoragebin, error) {
 	var obj entities.Model_warehousestoragebin
 	var arraobj []entities.Model_warehousestoragebin
-	var res helpers.Response
+	var objuom entities.Model_uomshare
+	var arraobjuom []entities.Model_uomshare
+	var res helpers.Responsestoragebin
 	msg := "Data Not Found"
 	con := db.CreateCon()
 	ctx := context.Background()
@@ -237,9 +240,34 @@ func Fetch_warehouseStorageBin(idstorage string) (helpers.Response, error) {
 	}
 	defer row.Close()
 
+	sql_selectuom := `SELECT 
+			iduom, nmuom   
+			FROM ` + configs.DB_tbl_mst_uom + ` 
+			WHERE statusuom = 'Y' 
+			ORDER BY nmuom ASC    
+	`
+	rowuom, erruom := con.QueryContext(ctx, sql_selectuom)
+	helpers.ErrorCheck(erruom)
+	for rowuom.Next() {
+		var (
+			iduom_db, nmuom_db string
+		)
+
+		erruom = rowuom.Scan(&iduom_db, &nmuom_db)
+
+		helpers.ErrorCheck(erruom)
+
+		objuom.Uom_id = iduom_db
+		objuom.Uom_name = nmuom_db
+		arraobjuom = append(arraobjuom, objuom)
+		msg = "Success"
+	}
+	defer rowuom.Close()
+
 	res.Status = fiber.StatusOK
 	res.Message = msg
 	res.Record = arraobj
+	res.Listuom = arraobjuom
 	res.Time = time.Since(start).String()
 
 	return res, nil
@@ -359,6 +387,64 @@ func Save_warehousestorage(admin, idrecord, idwarehouse, name, status, sData str
 
 		if flag_update {
 			flag = true
+			msg = "Succes"
+		} else {
+			fmt.Println(msg_update)
+		}
+	}
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = nil
+	res.Time = time.Since(render_page).String()
+
+	return res, nil
+}
+func Save_warehousestoragebin(admin, idrecord, idstorage, iduom, name, status, sData string, maxcapacity float32) (helpers.Response, error) {
+	var res helpers.Response
+	msg := "Failed"
+	tglnow, _ := goment.New()
+	render_page := time.Now()
+
+	if sData == "New" {
+		sql_insert := `
+			insert into
+			` + database_warehouse_storagebin_local + ` (
+				idbin , idstorage, iduom,  
+				nmbin, totalcapacity, maxcapacity, statusbin,  
+				createbin, createdatebin 
+			) values (
+				$1, $2, $3,     
+				$4, $5, $6, $7,  
+				$8, $9    
+			)
+		`
+		field_column := database_warehouse_storagebin_local + tglnow.Format("YYYY")
+		idrecord_counter := Get_counter(field_column)
+		flag_insert, msg_insert := Exec_SQL(sql_insert, database_warehouse_storage_local, "INSERT",
+			tglnow.Format("YY")+strconv.Itoa(idrecord_counter), idstorage, iduom,
+			name, 0, maxcapacity, status,
+			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
+
+		if flag_insert {
+			msg = "Succes"
+		} else {
+			fmt.Println(msg_insert)
+		}
+	} else {
+		sql_update := `
+			UPDATE 
+			` + database_warehouse_storagebin_local + `  
+			SET nmbin=$1, maxcapacity=$2, statusbin=$3, 
+			updatebin=$4, updatedatebin=$5        
+			WHERE idbin=$6   
+		`
+
+		flag_update, msg_update := Exec_SQL(sql_update, database_warehouse_storagebin_local, "UPDATE",
+			name, maxcapacity, status,
+			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
+
+		if flag_update {
 			msg = "Succes"
 		} else {
 			fmt.Println(msg_update)

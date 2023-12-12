@@ -8,7 +8,10 @@ type Model_uom struct {
 	Uom_create     string `json:"uom_create"`
 	Uom_update     string `json:"uom_update"`
 }
-
+type Model_uomshare struct {
+	Uom_id   string `json:"uom_id"`
+	Uom_name string `json:"uom_name"`
+}
 type Controller_uomsave struct {
 	Page       string `json:"page" validate:"required"`
 	Sdata      string `json:"sdata" validate:"required"`

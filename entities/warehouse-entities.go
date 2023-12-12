@@ -51,9 +51,22 @@ type Controller_warehousestoragesave struct {
 	Warehousestorage_name        string `json:"warehousestorage_name" validate:"required"`
 	Warehousestorage_status      string `json:"warehousestorage_status" validate:"required"`
 }
+type Controller_storagebinsave struct {
+	Page                   string  `json:"page" validate:"required"`
+	Sdata                  string  `json:"sdata" validate:"required"`
+	Storagebin_id          string  `json:"storagebin_id" validate:"required"`
+	Storagebin_idstorage   string  `json:"storagebin_idstorage" validate:"required"`
+	Storagebin_iduom       string  `json:"storagebin_iduom" validate:"required"`
+	Storagebin_name        string  `json:"storagebin_name" validate:"required"`
+	Storagebin_maxcapacity float32 `json:"storagebin_maxcapacity" `
+	Storagebin_status      string  `json:"storagebin_status" validate:"required"`
+}
 type Controller_warehouse struct {
 	Branch_id string `json:"branch_id" `
 }
 type Controller_warehousestorage struct {
 	Warehouse_id string `json:"warehouse_id" validate:"required"`
+}
+type Controller_warehousestoragebin struct {
+	Warehousestorage_id string `json:"warehousestorage_id" validate:"required"`
 }
