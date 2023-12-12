@@ -15,6 +15,8 @@ import (
 )
 
 const database_warehouse_local = configs.DB_tbl_mst_warehouse
+const database_warehouse_storage_local = configs.DB_tbl_mst_warehouse_storage
+const database_warehouse_storagebin_local = configs.DB_tbl_mst_warehouse_storagebin
 
 func Fetch_warehouseHome(idbranch string) (helpers.Responsewarehouse, error) {
 	var obj entities.Model_warehouse
@@ -115,6 +117,133 @@ func Fetch_warehouseHome(idbranch string) (helpers.Responsewarehouse, error) {
 
 	return res, nil
 }
+func Fetch_warehouseStorage(idwarehouse string) (helpers.Response, error) {
+	var obj entities.Model_warehousestorage
+	var arraobj []entities.Model_warehousestorage
+	var res helpers.Response
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "idstorage , nmstorage, statusstorage,  "
+	sql_select += "createstorage, to_char(COALESCE(createdatestorage,now()), 'YYYY-MM-DD HH24:MI:SS'),   "
+	sql_select += "updatestorage, to_char(COALESCE(updatedatestorage,now()), 'YYYY-MM-DD HH24:MI:SS')   "
+	sql_select += "FROM " + database_warehouse_storage_local + " AS A "
+	sql_select += "ORDER BY createdatestorage DESC "
+
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		var (
+			idstorage_db, nmstorage_db, statusstorage_db                                   string
+			createstorage_db, createdatestorage_db, updatestorage_db, updatedatestorage_db string
+		)
+
+		err = row.Scan(&idstorage_db, &nmstorage_db, &statusstorage_db,
+			&createstorage_db, &createdatestorage_db, &updatestorage_db, &updatedatestorage_db)
+
+		helpers.ErrorCheck(err)
+		create := ""
+		update := ""
+		status_css := configs.STATUS_CANCEL
+		if createstorage_db != "" {
+			create = createstorage_db + ", " + createdatestorage_db
+		}
+		if updatestorage_db != "" {
+			update = updatestorage_db + ", " + updatedatestorage_db
+		}
+		if statusstorage_db == "Y" {
+			status_css = configs.STATUS_COMPLETE
+		}
+
+		obj.Warehousestorage_id = idstorage_db
+		obj.Warehousestorage_name = nmstorage_db
+		obj.Warehousestorage_status = statusstorage_db
+		obj.Warehousestorage_status_css = status_css
+		obj.Warehousestorage_create = create
+		obj.Warehousestorage_update = update
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+	}
+	defer row.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = arraobj
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
+func Fetch_warehouseStorageBin(idstorage string) (helpers.Response, error) {
+	var obj entities.Model_warehousestoragebin
+	var arraobj []entities.Model_warehousestoragebin
+	var res helpers.Response
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "idbin, nmbin,   "
+	sql_select += "iduom, totalcapacity , maxcapacity, statusbin,  "
+	sql_select += "createbin, to_char(COALESCE(createdatebin,now()), 'YYYY-MM-DD HH24:MI:SS'),   "
+	sql_select += "updatebin, to_char(COALESCE(updatedatebin,now()), 'YYYY-MM-DD HH24:MI:SS')   "
+	sql_select += "FROM " + database_warehouse_storagebin_local + " AS A "
+	sql_select += "ORDER BY createdatebin DESC "
+
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		var (
+			idbin_db                                                       int
+			nmbin_db, iduom_db, statusbin_db                               string
+			totalcapacity_db, maxcapacity_db                               float32
+			createbin_db, createdatebin_db, updatebin_db, updatedatebin_db string
+		)
+
+		err = row.Scan(&idbin_db, &nmbin_db,
+			&iduom_db, &totalcapacity_db, &maxcapacity_db, &statusbin_db,
+			&createbin_db, &createdatebin_db, &updatebin_db, &updatedatebin_db)
+
+		helpers.ErrorCheck(err)
+		create := ""
+		update := ""
+		status_css := configs.STATUS_CANCEL
+		if createbin_db != "" {
+			create = createbin_db + ", " + createdatebin_db
+		}
+		if updatebin_db != "" {
+			update = updatebin_db + ", " + updatedatebin_db
+		}
+		if statusbin_db == "Y" {
+			status_css = configs.STATUS_COMPLETE
+		}
+
+		obj.Warehousestoragebin_id = idbin_db
+		obj.Warehousestoragebin_iduom = iduom_db
+		obj.Warehousestoragebin_name = nmbin_db
+		obj.Warehousestoragebin_maxcapacity = maxcapacity_db
+		obj.Warehousestoragebin_totalcapacity = totalcapacity_db
+		obj.Warehousestoragebin_status = statusbin_db
+		obj.Warehousestoragebin_status_css = status_css
+		obj.Warehousestoragebin_create = create
+		obj.Warehousestoragebin_update = update
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+	}
+	defer row.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = arraobj
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
 func Save_warehouse(admin, idrecord, idbranch, name, alamat, phone1, phone2, status, sData string) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
@@ -137,8 +266,9 @@ func Save_warehouse(admin, idrecord, idbranch, name, alamat, phone1, phone2, sta
 					$8, $9   
 				)
 			`
+			idrecord_new := strings.ToUpper(idbranch) + "-" + strings.ToUpper(idrecord)
 			flag_insert, msg_insert := Exec_SQL(sql_insert, database_warehouse_local, "INSERT",
-				strings.ToUpper(idrecord), idbranch,
+				idrecord_new, idbranch,
 				name, alamat, phone1, phone2, status,
 				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
@@ -161,6 +291,70 @@ func Save_warehouse(admin, idrecord, idbranch, name, alamat, phone1, phone2, sta
 
 		flag_update, msg_update := Exec_SQL(sql_update, database_warehouse_local, "UPDATE",
 			name, alamat, phone1, phone2, status,
+			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
+
+		if flag_update {
+			flag = true
+			msg = "Succes"
+		} else {
+			fmt.Println(msg_update)
+		}
+	}
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = nil
+	res.Time = time.Since(render_page).String()
+
+	return res, nil
+}
+func Save_warehousestorage(admin, idrecord, idwarehouse, name, status, sData string) (helpers.Response, error) {
+	var res helpers.Response
+	msg := "Failed"
+	tglnow, _ := goment.New()
+	render_page := time.Now()
+	flag := false
+
+	if sData == "New" {
+		flag = CheckDB(database_warehouse_storage_local, "idstorage", strings.ToUpper(idrecord))
+		if !flag {
+			sql_insert := `
+				insert into
+				` + database_warehouse_storage_local + ` (
+					idstorage , idwarehouse, 
+					nmstorage, statusstorage,  
+					createstorage, createdatestorage 
+				) values (
+					$1, $2,    
+					$3, $4, 
+					$5, $6    
+				)
+			`
+			idrecord_new := strings.ToUpper(idwarehouse) + "-" + strings.ToUpper(idrecord)
+			flag_insert, msg_insert := Exec_SQL(sql_insert, database_warehouse_storage_local, "INSERT",
+				idrecord_new, idwarehouse,
+				name, status,
+				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
+
+			if flag_insert {
+				msg = "Succes"
+			} else {
+				fmt.Println(msg_insert)
+			}
+		} else {
+			msg = "Duplicate Entry"
+		}
+	} else {
+		sql_update := `
+				UPDATE 
+				` + database_warehouse_storage_local + `  
+				SET nmstorage=$1, statusstorage=$2, 
+				updatestorage=$3, updatedatestorage=$4       
+				WHERE idstorage=$5  
+			`
+
+		flag_update, msg_update := Exec_SQL(sql_update, database_warehouse_storage_local, "UPDATE",
+			name, status,
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
 
 		if flag_update {
