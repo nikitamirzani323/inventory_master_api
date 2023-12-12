@@ -75,6 +75,46 @@ func Fetch_uomHome() (helpers.Response, error) {
 
 	return res, nil
 }
+func Fetch_uomShare() (helpers.Response, error) {
+	var obj entities.Model_uomshare
+	var arraobj []entities.Model_uomshare
+	var res helpers.Response
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	sql_select := `SELECT 
+			iduom , nmuom 
+			FROM ` + database_uom_local + `  
+			WHERE statusuom='Y' 
+			ORDER BY createdateuom DESC   `
+
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		var (
+			iduom_db, nmuom_db string
+		)
+
+		err = row.Scan(&iduom_db, &nmuom_db)
+
+		helpers.ErrorCheck(err)
+
+		obj.Uom_id = iduom_db
+		obj.Uom_name = nmuom_db
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+	}
+	defer row.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = arraobj
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
 func Save_uom(admin, idrecord, name, status, sData string) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"

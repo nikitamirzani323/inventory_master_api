@@ -14,6 +14,7 @@ import (
 )
 
 const Fieluom_home_redis = "LISTUOM_BACKEND"
+const Fieluomshare_home_redis = "LISTUOMSHARE_BACKEND"
 
 func Uomhome(c *fiber.Ctx) error {
 	var obj entities.Model_uom
@@ -41,6 +42,45 @@ func Uomhome(c *fiber.Ctx) error {
 
 	if !flag {
 		result, err := models.Fetch_uomHome()
+		if err != nil {
+			c.Status(fiber.StatusBadRequest)
+			return c.JSON(fiber.Map{
+				"status":  fiber.StatusBadRequest,
+				"message": err.Error(),
+				"record":  nil,
+			})
+		}
+		helpers.SetRedis(Fieluom_home_redis, result, 60*time.Minute)
+		fmt.Println("UOM MYSQL")
+		return c.JSON(result)
+	} else {
+		fmt.Println("UOM CACHE")
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusOK,
+			"message": "Success",
+			"record":  arraobj,
+			"time":    time.Since(render_page).String(),
+		})
+	}
+}
+func Uomshare(c *fiber.Ctx) error {
+	var obj entities.Model_uomshare
+	var arraobj []entities.Model_uomshare
+	render_page := time.Now()
+	resultredis, flag := helpers.GetRedis(Fieluom_home_redis)
+	jsonredis := []byte(resultredis)
+	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
+	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		uom_id, _ := jsonparser.GetString(value, "uom_id")
+		uom_name, _ := jsonparser.GetString(value, "uom_name")
+
+		obj.Uom_id = uom_id
+		obj.Uom_name = uom_name
+		arraobj = append(arraobj, obj)
+	})
+
+	if !flag {
+		result, err := models.Fetch_uomShare()
 		if err != nil {
 			c.Status(fiber.StatusBadRequest)
 			return c.JSON(fiber.Map{
@@ -115,5 +155,8 @@ func UomSave(c *fiber.Ctx) error {
 func _deleteredis_uom() {
 	val_master := helpers.DeleteRedis(Fieluom_home_redis)
 	fmt.Printf("Redis Delete BACKEND UOM : %d", val_master)
+
+	val_master_share := helpers.DeleteRedis(Fieluomshare_home_redis)
+	fmt.Printf("Redis Delete BACKEND UOM SHARE : %d", val_master_share)
 
 }
