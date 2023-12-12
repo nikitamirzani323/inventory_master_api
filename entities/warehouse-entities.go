@@ -23,7 +23,7 @@ type Model_warehousestorage struct {
 }
 type Model_warehousestoragebin struct {
 	Warehousestoragebin_id            int     `json:"warehousestoragebin_id"`
-	Warehousestoragebin_iduom         string  `json:"warehousestoragebin_idum"`
+	Warehousestoragebin_iduom         string  `json:"warehousestoragebin_iduom"`
 	Warehousestoragebin_name          string  `json:"warehousestoragebin_name"`
 	Warehousestoragebin_totalcapacity float32 `json:"warehousestoragebin_totalcapacity"`
 	Warehousestoragebin_maxcapacity   float32 `json:"warehousestoragebin_maxcapacity"`
@@ -68,5 +68,5 @@ type Controller_warehousestorage struct {
 	Warehouse_id string `json:"warehouse_id" validate:"required"`
 }
 type Controller_warehousestoragebin struct {
-	Warehousestorage_id string `json:"warehousestorage_id" validate:"required"`
+	Storage_id string `json:"storage_id" validate:"required"`
 }

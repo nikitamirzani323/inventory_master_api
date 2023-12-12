@@ -224,32 +224,38 @@ func WarehousestorageBinhome(c *fiber.Ctx) error {
 		})
 	}
 
-	var obj entities.Model_warehousestorage
-	var arraobj []entities.Model_warehousestorage
+	var obj entities.Model_warehousestoragebin
+	var arraobj []entities.Model_warehousestoragebin
 	render_page := time.Now()
-	redisdata := Fieldwarehousestorage_home_redis + "_" + strings.ToUpper(client.Warehousestorage_id)
+	redisdata := Fieldwarehousestorage_home_redis + "_" + strings.ToUpper(client.Storage_id)
 	resultredis, flag := helpers.GetRedis(redisdata)
 	jsonredis := []byte(resultredis)
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		warehousestorage_id, _ := jsonparser.GetString(value, "warehousestorage_id")
-		warehousestorage_name, _ := jsonparser.GetString(value, "warehousestorage_name")
-		warehousestorage_status, _ := jsonparser.GetString(value, "warehousestorage_status")
-		warehousestorage_status_css, _ := jsonparser.GetString(value, "warehousestorage_status_css")
-		warehousestorage_create, _ := jsonparser.GetString(value, "warehousestorage_create")
-		warehousestorage_update, _ := jsonparser.GetString(value, "warehousestorage_update")
+		warehousestoragebin_id, _ := jsonparser.GetInt(value, "warehousestoragebin_id")
+		warehousestoragebin_iduom, _ := jsonparser.GetString(value, "warehousestoragebin_iduom")
+		warehousestoragebin_name, _ := jsonparser.GetString(value, "warehousestoragebin_name")
+		warehousestoragebin_totalcapacity, _ := jsonparser.GetFloat(value, "warehousestoragebin_totalcapacity")
+		warehousestoragebin_maxcapacity, _ := jsonparser.GetFloat(value, "warehousestoragebin_maxcapacity")
+		warehousestoragebin_status, _ := jsonparser.GetString(value, "warehousestoragebin_status")
+		warehousestoragebin_status_css, _ := jsonparser.GetString(value, "warehousestoragebin_status_css")
+		warehousestoragebin_create, _ := jsonparser.GetString(value, "warehousestoragebin_create")
+		warehousestoragebin_update, _ := jsonparser.GetString(value, "warehousestoragebin_update")
 
-		obj.Warehousestorage_id = warehousestorage_id
-		obj.Warehousestorage_name = warehousestorage_name
-		obj.Warehousestorage_status = warehousestorage_status
-		obj.Warehousestorage_status_css = warehousestorage_status_css
-		obj.Warehousestorage_create = warehousestorage_create
-		obj.Warehousestorage_update = warehousestorage_update
+		obj.Warehousestoragebin_id = int(warehousestoragebin_id)
+		obj.Warehousestoragebin_iduom = warehousestoragebin_iduom
+		obj.Warehousestoragebin_name = warehousestoragebin_name
+		obj.Warehousestoragebin_totalcapacity = float32(warehousestoragebin_totalcapacity)
+		obj.Warehousestoragebin_maxcapacity = float32(warehousestoragebin_maxcapacity)
+		obj.Warehousestoragebin_status = warehousestoragebin_status
+		obj.Warehousestoragebin_status_css = warehousestoragebin_status_css
+		obj.Warehousestoragebin_create = warehousestoragebin_create
+		obj.Warehousestoragebin_update = warehousestoragebin_update
 		arraobj = append(arraobj, obj)
 	})
 
 	if !flag {
-		result, err := models.Fetch_warehouseStorage(client.Warehouse_id)
+		result, err := models.Fetch_warehouseStorageBin(client.Storage_id)
 		if err != nil {
 			c.Status(fiber.StatusBadRequest)
 			return c.JSON(fiber.Map{
@@ -259,10 +265,10 @@ func WarehousestorageBinhome(c *fiber.Ctx) error {
 			})
 		}
 		helpers.SetRedis(redisdata, result, 60*time.Minute)
-		fmt.Println("WAREHOUSE MYSQL")
+		fmt.Println("WAREHOUSE STORAGE MYSQL")
 		return c.JSON(result)
 	} else {
-		fmt.Println("WAREHOUSE CACHE")
+		fmt.Println("WAREHOUSE STORAGE CACHE")
 		return c.JSON(fiber.Map{
 			"status":  fiber.StatusOK,
 			"message": "Success",
@@ -437,7 +443,7 @@ func _deleteredis_warehouse(idbranch, idwarehouse, idstorage string) {
 	val_master_warehouse := helpers.DeleteRedis(Fieldwarehouse_home_redis + "_" + strings.ToUpper(idwarehouse))
 	fmt.Printf("Redis Delete BACKEND WAREHOUSE : %d\n", val_master_warehouse)
 
-	val_master_storage := helpers.DeleteRedis(Fieldwarehouse_home_redis + "_" + strings.ToUpper(idwarehouse))
+	val_master_storage := helpers.DeleteRedis(Fieldwarehousestorage_home_redis + "_" + strings.ToUpper(idstorage))
 	fmt.Printf("Redis Delete BACKEND WAREHOUSE : %d\n", val_master_storage)
 
 }

@@ -133,6 +133,7 @@ func Fetch_warehouseStorage(idwarehouse string) (helpers.Response, error) {
 	sql_select += "createstorage, to_char(COALESCE(createdatestorage,now()), 'YYYY-MM-DD HH24:MI:SS'),   "
 	sql_select += "updatestorage, to_char(COALESCE(updatedatestorage,now()), 'YYYY-MM-DD HH24:MI:SS')   "
 	sql_select += "FROM " + database_warehouse_storage_local + " AS A "
+	sql_select += "WHERE idwarehouse='" + idwarehouse + "' "
 	sql_select += "ORDER BY createdatestorage DESC "
 
 	row, err := con.QueryContext(ctx, sql_select)
@@ -196,6 +197,7 @@ func Fetch_warehouseStorageBin(idstorage string) (helpers.Responsestoragebin, er
 	sql_select += "createbin, to_char(COALESCE(createdatebin,now()), 'YYYY-MM-DD HH24:MI:SS'),   "
 	sql_select += "updatebin, to_char(COALESCE(updatedatebin,now()), 'YYYY-MM-DD HH24:MI:SS')   "
 	sql_select += "FROM " + database_warehouse_storagebin_local + " AS A "
+	sql_select += "WHERE idstorage='" + idstorage + "' "
 	sql_select += "ORDER BY createdatebin DESC "
 
 	row, err := con.QueryContext(ctx, sql_select)
