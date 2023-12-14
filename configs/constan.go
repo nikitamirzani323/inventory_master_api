@@ -13,6 +13,7 @@ const (
 	DB_tbl_mst_categoryitem         string = "tbl_mst_categoryitem"
 	DB_tbl_mst_item                 string = "tbl_mst_item"
 
+	PAGING_PAGE     int    = 50
 	STATUS_NEW      string = "background:#0dcaf0;font-weight:bold;color:black;"
 	STATUS_RUNNING  string = "background:#FFEB3B;font-weight:bold;color:black;"
 	STATUS_COMPLETE string = "background:#97f2d6;font-weight:bold;color:#165b55;"

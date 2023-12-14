@@ -28,7 +28,7 @@ func Fetch_catetemHome(search string, page int) (helpers.Responsepaging, error) 
 	ctx := context.Background()
 	start := time.Now()
 
-	perpage := 25
+	perpage := configs.PAGING_PAGE
 	totalrecord := 0
 	offset := page
 	sql_selectcount := ""
@@ -107,23 +107,50 @@ func Fetch_catetemHome(search string, page int) (helpers.Responsepaging, error) 
 
 	return res, nil
 }
-func Fetch_itemHome() (helpers.Response, error) {
+func Fetch_itemHome(search string, page int) (helpers.Responsepaging, error) {
 	var obj entities.Model_item
 	var arraobj []entities.Model_item
-	var res helpers.Response
+	var res helpers.Responsepaging
 	msg := "Data Not Found"
 	con := db.CreateCon()
 	ctx := context.Background()
 	start := time.Now()
 
-	sql_select := `SELECT 
-			A.iditem , A.idcateitem, B.nmcateitem, 
-			A.nmitem , A.descpitem, A.inventory_item, A.sales_item, A.purchase_item, A.statusitem,   
-			A.createitem, to_char(COALESCE(A.createdateitem,now()), 'YYYY-MM-DD HH24:MI:SS'), 
-			A.updateitem, to_char(COALESCE(A.updatedateitem,now()), 'YYYY-MM-DD HH24:MI:SS') 
-			FROM ` + database_item_local + ` as A  
-			JOIN ` + database_cateitem_local + ` as B ON B.idcateitem = A.idcateitem   
-			ORDER BY A.createdateitem DESC   `
+	perpage := configs.PAGING_PAGE
+	totalrecord := 0
+	offset := page
+	sql_selectcount := ""
+	sql_selectcount += ""
+	sql_selectcount += "SELECT "
+	sql_selectcount += "COUNT(iditem) as totalpattern  "
+	sql_selectcount += "FROM " + database_item_local + "  "
+	if search != "" {
+		sql_selectcount += "WHERE LOWER(nmitem) LIKE '%" + strings.ToLower(search) + "%' "
+	}
+	row_selectcount := con.QueryRowContext(ctx, sql_selectcount)
+	switch e_selectcount := row_selectcount.Scan(&totalrecord); e_selectcount {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e_selectcount)
+	}
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "A.iditem , A.idcateitem, B.nmcateitem,  "
+	sql_select += "A.nmitem , A.descpitem, A.inventory_item, A.sales_item, A.purchase_item, A.statusitem,  "
+	sql_select += "A.createitem, to_char(COALESCE(A.createdateitem,now()), 'YYYY-MM-DD HH24:MI:SS'), "
+	sql_select += "A.updateitem, to_char(COALESCE(A.updatedateitem,now()), 'YYYY-MM-DD HH24:MI:SS')  "
+	sql_select += "FROM " + database_item_local + "  as A  "
+	sql_select += "JOIN " + database_cateitem_local + "  as B ON B.idcateitem = A.idcateitem   "
+	if search == "" {
+		sql_select += "WHERE LOWER(nmitem) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_select += "ORDER BY A.createdateitem DESC  OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
+
+	} else {
+		sql_select += "WHERE LOWER(nmcateitem) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_select += "ORDER BY A.createdateitem DESC   LIMIT " + strconv.Itoa(perpage)
+	}
 
 	row, err := con.QueryContext(ctx, sql_select)
 	helpers.ErrorCheck(err)
@@ -172,6 +199,8 @@ func Fetch_itemHome() (helpers.Response, error) {
 	res.Status = fiber.StatusOK
 	res.Message = msg
 	res.Record = arraobj
+	res.Perpage = perpage
+	res.Totalrecord = totalrecord
 	res.Time = time.Since(start).String()
 
 	return res, nil
@@ -239,10 +268,6 @@ func Save_item(admin, idrecord, name, descp, inventory, sales, purchase, status,
 	render_page := time.Now()
 
 	if sData == "New" {
-		// A.iditem , A.idcateitem, B.nmcateitem,
-		// A.nmitem , A.descpitem, A.inventory_item, A.sales_item, A.purchase_item, A.statusitem,
-		// A.createitem, to_char(COALESCE(A.createdateitem,now()), 'YYYY-MM-DD HH24:MI:SS'),
-		// A.updateitem, to_char(COALESCE(A.updatedateitem,now()), 'YYYY-MM-DD HH24:MI:SS')
 		sql_insert := `
 				insert into
 				` + database_item_local + ` (
