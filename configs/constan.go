@@ -10,9 +10,8 @@ const (
 	DB_tbl_mst_warehouse            string = "tbl_mst_warehouse"
 	DB_tbl_mst_warehouse_storage    string = "tbl_mst_warehouse_storage"
 	DB_tbl_mst_warehouse_storagebin string = "tbl_mst_warehouse_storage_bin"
-	DB_tbl_mst_company              string = "tbl_mst_company"
-	DB_tbl_mst_company_adminrule    string = "tbl_mst_company_adminrule"
-	DB_tbl_mst_company_admin        string = "tbl_mst_company_admin"
+	DB_tbl_mst_categoryitem         string = "tbl_mst_categoryitem"
+	DB_tbl_mst_item                 string = "tbl_mst_item"
 
 	STATUS_NEW      string = "background:#0dcaf0;font-weight:bold;color:black;"
 	STATUS_RUNNING  string = "background:#FFEB3B;font-weight:bold;color:black;"
