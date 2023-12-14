@@ -16,6 +16,7 @@ type Model_warehouse struct {
 type Model_warehousestorage struct {
 	Warehousestorage_id         string `json:"warehousestorage_id"`
 	Warehousestorage_name       string `json:"warehousestorage_name"`
+	Warehousestorage_totalbin   int    `json:"warehousestorage_totalbin"`
 	Warehousestorage_status     string `json:"warehousestorage_status"`
 	Warehousestorage_status_css string `json:"warehousestorage_status_css"`
 	Warehousestorage_create     string `json:"warehousestorage_create"`
@@ -54,7 +55,7 @@ type Controller_warehousestoragesave struct {
 type Controller_storagebinsave struct {
 	Page                   string  `json:"page" validate:"required"`
 	Sdata                  string  `json:"sdata" validate:"required"`
-	Storagebin_id          string  `json:"storagebin_id" validate:"required"`
+	Storagebin_id          int     `json:"storagebin_id" `
 	Storagebin_idstorage   string  `json:"storagebin_idstorage" validate:"required"`
 	Storagebin_iduom       string  `json:"storagebin_iduom" validate:"required"`
 	Storagebin_name        string  `json:"storagebin_name" validate:"required"`

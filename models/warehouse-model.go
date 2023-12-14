@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
 	"strings"
@@ -163,6 +164,7 @@ func Fetch_warehouseStorage(idwarehouse string) (helpers.Response, error) {
 
 		obj.Warehousestorage_id = idstorage_db
 		obj.Warehousestorage_name = nmstorage_db
+		obj.Warehousestorage_totalbin = _Get_total_storage(idstorage_db)
 		obj.Warehousestorage_status = statusstorage_db
 		obj.Warehousestorage_status_css = status_css
 		obj.Warehousestorage_create = create
@@ -403,7 +405,7 @@ func Save_warehousestorage(admin, idrecord, idwarehouse, name, status, sData str
 
 	return res, nil
 }
-func Save_warehousestoragebin(admin, idrecord, idstorage, iduom, name, status, sData string, maxcapacity float32) (helpers.Response, error) {
+func Save_warehousestoragebin(admin, idstorage, iduom, name, status, sData string, idrecord int, maxcapacity float32) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
 	tglnow, _ := goment.New()
@@ -460,4 +462,24 @@ func Save_warehousestoragebin(admin, idrecord, idstorage, iduom, name, status, s
 	res.Time = time.Since(render_page).String()
 
 	return res, nil
+}
+func _Get_total_storage(idstorage string) int {
+	con := db.CreateCon()
+	ctx := context.Background()
+	total := 0
+	sql_select := `SELECT
+			COUNT(idbin)    
+			FROM ` + configs.DB_tbl_mst_warehouse_storagebin + `  
+			WHERE idstorage='` + idstorage + `'     
+		`
+
+	row := con.QueryRowContext(ctx, sql_select)
+	switch e := row.Scan(&total); e {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e)
+	}
+
+	return total
 }
