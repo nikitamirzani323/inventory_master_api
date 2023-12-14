@@ -146,7 +146,7 @@ func Fetch_itemHome() (helpers.Response, error) {
 
 	return res, nil
 }
-func Save_cateitem(admin, idrecord, name, status, sData string) (helpers.Response, error) {
+func Save_cateitem(admin, name, status, sData string, idrecord int) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
 	tglnow, _ := goment.New()
