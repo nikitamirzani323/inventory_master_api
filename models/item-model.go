@@ -2,8 +2,10 @@ package models
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -17,21 +19,47 @@ import (
 const database_cateitem_local = configs.DB_tbl_mst_categoryitem
 const database_item_local = configs.DB_tbl_mst_item
 
-func Fetch_catetemHome() (helpers.Response, error) {
+func Fetch_catetemHome(search string, page int) (helpers.Responsepaging, error) {
 	var obj entities.Model_cateitem
 	var arraobj []entities.Model_cateitem
-	var res helpers.Response
+	var res helpers.Responsepaging
 	msg := "Data Not Found"
 	con := db.CreateCon()
 	ctx := context.Background()
 	start := time.Now()
 
-	sql_select := `SELECT 
-			idcateitem , nmcateitem, statuscateitem,   
-			createcateitem, to_char(COALESCE(createdatecateitem,now()), 'YYYY-MM-DD HH24:MI:SS'), 
-			updatecateitem, to_char(COALESCE(updatedatecateitem,now()), 'YYYY-MM-DD HH24:MI:SS') 
-			FROM ` + database_cateitem_local + `  
-			ORDER BY createdatecateitem DESC   `
+	perpage := 25
+	totalrecord := 0
+	offset := page
+	sql_selectcount := ""
+	sql_selectcount += ""
+	sql_selectcount += "SELECT "
+	sql_selectcount += "COUNT(idcateitem) as totalpattern  "
+	sql_selectcount += "FROM " + database_cateitem_local + "  "
+	if search != "" {
+		sql_selectcount += "WHERE LOWER(nmcateitem) LIKE '%" + strings.ToLower(search) + "%' "
+	}
+	row_selectcount := con.QueryRowContext(ctx, sql_selectcount)
+	switch e_selectcount := row_selectcount.Scan(&totalrecord); e_selectcount {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e_selectcount)
+	}
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "idcateitem , nmcateitem, statuscateitem, "
+	sql_select += "createcateitem, to_char(COALESCE(createdatecateitem,now()), 'YYYY-MM-DD HH24:MI:SS'), "
+	sql_select += "updatecateitem, to_char(COALESCE(updatedatecateitem,now()), 'YYYY-MM-DD HH24:MI:SS') "
+	sql_select += "FROM " + database_cateitem_local + "   "
+	if search == "" {
+		sql_select += "ORDER BY createdatecateitem DESC  OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
+
+	} else {
+		sql_select += "WHERE LOWER(nmcateitem) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_select += "ORDER BY createdatecateitem DESC   LIMIT " + strconv.Itoa(perpage)
+	}
 
 	row, err := con.QueryContext(ctx, sql_select)
 	helpers.ErrorCheck(err)
@@ -72,6 +100,8 @@ func Fetch_catetemHome() (helpers.Response, error) {
 
 	res.Status = fiber.StatusOK
 	res.Message = msg
+	res.Perpage = perpage
+	res.Totalrecord = totalrecord
 	res.Record = arraobj
 	res.Time = time.Since(start).String()
 

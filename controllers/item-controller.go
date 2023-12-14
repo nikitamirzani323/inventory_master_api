@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/buger/jsonparser"
@@ -17,11 +18,46 @@ const Fieldcateitem_home_redis = "LISTCATEITEM_BACKEND"
 const Fielditem_home_redis = "LISTITEM_BACKEND"
 
 func Cateitemhome(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_cateitem)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+	fmt.Println(client.Cateitem_page)
+	if client.Cateitem_search != "" {
+		val_pattern := helpers.DeleteRedis(Fieldcateitem_home_redis + "_" + strconv.Itoa(client.Cateitem_page) + "_" + client.Cateitem_search)
+		fmt.Printf("Redis Delete BACKEND CATEITEM : %d", val_pattern)
+	}
+
 	var obj entities.Model_cateitem
 	var arraobj []entities.Model_cateitem
 	render_page := time.Now()
-	resultredis, flag := helpers.GetRedis(Fieldcateitem_home_redis)
+	resultredis, flag := helpers.GetRedis(Fieldcateitem_home_redis + "_" + strconv.Itoa(client.Cateitem_page) + "_" + client.Cateitem_search)
 	jsonredis := []byte(resultredis)
+	perpage_RD, _ := jsonparser.GetInt(jsonredis, "perpage")
+	totalrecord_RD, _ := jsonparser.GetInt(jsonredis, "totalrecord")
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		cateitem_id, _ := jsonparser.GetInt(value, "cateitem_id")
@@ -41,7 +77,7 @@ func Cateitemhome(c *fiber.Ctx) error {
 	})
 
 	if !flag {
-		result, err := models.Fetch_catetemHome()
+		result, err := models.Fetch_catetemHome(client.Cateitem_search, client.Cateitem_page)
 		if err != nil {
 			c.Status(fiber.StatusBadRequest)
 			return c.JSON(fiber.Map{
@@ -50,16 +86,18 @@ func Cateitemhome(c *fiber.Ctx) error {
 				"record":  nil,
 			})
 		}
-		helpers.SetRedis(Fieldcateitem_home_redis, result, 60*time.Minute)
+		helpers.SetRedis(Fieldcateitem_home_redis+"_"+strconv.Itoa(client.Cateitem_page)+"_"+client.Cateitem_search, result, 60*time.Minute)
 		fmt.Println("CATE ITEM MYSQL")
 		return c.JSON(result)
 	} else {
 		fmt.Println("CATE ITEM CACHE")
 		return c.JSON(fiber.Map{
-			"status":  fiber.StatusOK,
-			"message": "Success",
-			"record":  arraobj,
-			"time":    time.Since(render_page).String(),
+			"status":      fiber.StatusOK,
+			"message":     "Success",
+			"record":      arraobj,
+			"perpage":     perpage_RD,
+			"totalrecord": totalrecord_RD,
+			"time":        time.Since(render_page).String(),
 		})
 	}
 }
@@ -169,7 +207,7 @@ func CateitemSave(c *fiber.Ctx) error {
 		})
 	}
 
-	_deleteredis_item()
+	_deleteredis_item(client.Cateitem_search, client.Cateitem_page)
 	return c.JSON(result)
 }
 func ItemSave(c *fiber.Ctx) error {
@@ -220,11 +258,11 @@ func ItemSave(c *fiber.Ctx) error {
 		})
 	}
 
-	_deleteredis_item()
+	_deleteredis_item("", 0)
 	return c.JSON(result)
 }
-func _deleteredis_item() {
-	val_master := helpers.DeleteRedis(Fieldcateitem_home_redis)
+func _deleteredis_item(search string, page int) {
+	val_master := helpers.DeleteRedis(Fieldcateitem_home_redis + "_" + strconv.Itoa(page) + "_" + search)
 	fmt.Printf("Redis Delete BACKEND CATEITEM : %d", val_master)
 
 }

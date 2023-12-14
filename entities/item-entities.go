@@ -25,6 +25,8 @@ type Model_item struct {
 type Controller_cateitemsave struct {
 	Page            string `json:"page" validate:"required"`
 	Sdata           string `json:"sdata" validate:"required"`
+	Cateitem_search string `json:"cateitem_search"`
+	Cateitem_page   int    `json:"cateitem_page"`
 	Cateitem_id     int    `json:"cateitem_id" `
 	Cateitem_name   string `json:"cateitem_name" validate:"required"`
 	Cateitem_status string `json:"cateitem_status" validate:"required"`
@@ -40,4 +42,8 @@ type Controller_itemsave struct {
 	Item_sales      string `json:"item_sales" validate:"required"`
 	Item_purchase   string `json:"item_purchase" validate:"required"`
 	Item_status     string `json:"item_status" validate:"required"`
+}
+type Controller_cateitem struct {
+	Cateitem_search string `json:"cateitem_search"`
+	Cateitem_page   int    `json:"cateitem_page"`
 }
