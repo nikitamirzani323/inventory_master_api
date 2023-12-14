@@ -282,7 +282,8 @@ func Save_warehouse(admin, idrecord, idbranch, name, alamat, phone1, phone2, sta
 	flag := false
 
 	if sData == "New" {
-		flag = CheckDB(database_warehouse_local, "idwarehouse", strings.ToUpper(idrecord))
+		idrecord_new := strings.ToUpper(idbranch) + "-" + strings.ToUpper(idrecord)
+		flag = CheckDB(database_warehouse_local, "idwarehouse", idrecord_new)
 		if !flag {
 			sql_insert := `
 				insert into
@@ -296,7 +297,6 @@ func Save_warehouse(admin, idrecord, idbranch, name, alamat, phone1, phone2, sta
 					$8, $9   
 				)
 			`
-			idrecord_new := strings.ToUpper(idbranch) + "-" + strings.ToUpper(idrecord)
 			flag_insert, msg_insert := Exec_SQL(sql_insert, database_warehouse_local, "INSERT",
 				idrecord_new, idbranch,
 				name, alamat, phone1, phone2, status,
@@ -346,7 +346,8 @@ func Save_warehousestorage(admin, idrecord, idwarehouse, name, status, sData str
 	flag := false
 
 	if sData == "New" {
-		flag = CheckDB(database_warehouse_storage_local, "idstorage", strings.ToUpper(idrecord))
+		idrecord_new := strings.ToUpper(idwarehouse) + "-" + strings.ToUpper(idrecord)
+		flag = CheckDB(database_warehouse_storage_local, "idstorage", idrecord_new)
 		if !flag {
 			sql_insert := `
 				insert into
@@ -360,7 +361,7 @@ func Save_warehousestorage(admin, idrecord, idwarehouse, name, status, sData str
 					$5, $6    
 				)
 			`
-			idrecord_new := strings.ToUpper(idwarehouse) + "-" + strings.ToUpper(idrecord)
+
 			flag_insert, msg_insert := Exec_SQL(sql_insert, database_warehouse_storage_local, "INSERT",
 				idrecord_new, idwarehouse,
 				name, status,
