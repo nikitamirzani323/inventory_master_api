@@ -16,6 +16,7 @@ import (
 
 const Fieldcateitem_home_redis = "LISTCATEITEM_BACKEND"
 const Fielditem_home_redis = "LISTITEM_BACKEND"
+const Fielditemuom_home_redis = "LISTITEMUOM_BACKEND"
 
 func Cateitemhome(c *fiber.Ctx) error {
 	var errors []*helpers.ErrorResponse
@@ -150,8 +151,10 @@ func Itemhome(c *fiber.Ctx) error {
 		item_id, _ := jsonparser.GetString(value, "item_id")
 		item_idcateitem, _ := jsonparser.GetInt(value, "item_idcateitem")
 		item_nmcateitem, _ := jsonparser.GetString(value, "item_nmcateitem")
+		item_iduom, _ := jsonparser.GetString(value, "item_iduom")
 		item_name, _ := jsonparser.GetString(value, "item_name")
 		item_descp, _ := jsonparser.GetString(value, "item_descp")
+		item_urlimg, _ := jsonparser.GetString(value, "item_urlimg")
 		item_inventory, _ := jsonparser.GetString(value, "item_inventory")
 		item_sales, _ := jsonparser.GetString(value, "item_sales")
 		item_purchase, _ := jsonparser.GetString(value, "item_purchase")
@@ -166,8 +169,10 @@ func Itemhome(c *fiber.Ctx) error {
 		obj.Item_id = item_id
 		obj.Item_idcateitem = int(item_idcateitem)
 		obj.Item_nmcateitem = item_nmcateitem
+		obj.Item_iduom = item_iduom
 		obj.Item_name = item_name
 		obj.Item_descp = item_descp
+		obj.Item_urlimg = item_urlimg
 		obj.Item_inventory = item_inventory
 		obj.Item_sales = item_sales
 		obj.Item_purchase = item_purchase
@@ -211,6 +216,85 @@ func Itemhome(c *fiber.Ctx) error {
 			"perpage":      perpage_RD,
 			"totalrecord":  totalrecord_RD,
 			"time":         time.Since(render_page).String(),
+		})
+	}
+}
+func Itemuom(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_itemuom)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+
+	var obj entities.Model_itemuom
+	var arraobj []entities.Model_itemuom
+	render_page := time.Now()
+	resultredis, flag := helpers.GetRedis(Fielditemuom_home_redis + "_" + client.Item_id)
+	jsonredis := []byte(resultredis)
+	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
+	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		itemuom_id, _ := jsonparser.GetInt(value, "itemuom_id")
+		itemuom_iduom, _ := jsonparser.GetString(value, "itemuom_iduom")
+		itemuom_nmuom, _ := jsonparser.GetString(value, "itemuom_nmuom")
+		itemuom_default, _ := jsonparser.GetString(value, "itemuom_default")
+		itemuom_default_css, _ := jsonparser.GetString(value, "itemuom_default_css")
+		itemuom_conversion, _ := jsonparser.GetFloat(value, "itemuom_conversion")
+		itemuom_create, _ := jsonparser.GetString(value, "itemuom_create")
+		itemuom_update, _ := jsonparser.GetString(value, "itemuom_update")
+
+		obj.Itemuom_id = int(itemuom_id)
+		obj.Itemuom_iduom = itemuom_iduom
+		obj.Itemuom_nmuom = itemuom_nmuom
+		obj.Itemuom_default = itemuom_default
+		obj.Itemuom_default_css = itemuom_default_css
+		obj.Itemuom_conversion = float32(itemuom_conversion)
+		obj.Itemuom_create = itemuom_create
+		obj.Itemuom_update = itemuom_update
+		arraobj = append(arraobj, obj)
+	})
+
+	if !flag {
+		result, err := models.Fetch_itemuom(client.Item_id)
+		if err != nil {
+			c.Status(fiber.StatusBadRequest)
+			return c.JSON(fiber.Map{
+				"status":  fiber.StatusBadRequest,
+				"message": err.Error(),
+				"record":  nil,
+			})
+		}
+		helpers.SetRedis(Fielditemuom_home_redis+"_"+client.Item_id, result, 60*time.Minute)
+		fmt.Println("ITEM UOM MYSQL")
+		return c.JSON(result)
+	} else {
+		fmt.Println("ITEM UOM CACHE")
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusOK,
+			"message": "Success",
+			"record":  arraobj,
+			"time":    time.Since(render_page).String(),
 		})
 	}
 }
@@ -261,7 +345,7 @@ func CateitemSave(c *fiber.Ctx) error {
 		})
 	}
 
-	_deleteredis_item(client.Cateitem_search, client.Cateitem_page)
+	_deleteredis_item(client.Cateitem_search, "", client.Cateitem_page)
 	return c.JSON(result)
 }
 func ItemSave(c *fiber.Ctx) error {
@@ -298,10 +382,11 @@ func ItemSave(c *fiber.Ctx) error {
 	temp_decp := helpers.Decryption(name)
 	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
 
-	// admin, idrecord, iduom, name, descp, inventory, sales, purchase, status, sData string, idcateitem int
+	// admin, idrecord, iduom, name, descp, urlimgitem, inventory, sales, purchase, status, sData string, idcateitem int
 	result, err := models.Save_item(
 		client_admin,
-		client.Item_id, client.Item_iduom, client.Item_name, client.Item_descp, client.Item_inventory, client.Item_sales, client.Item_purchase, client.Item_status,
+		client.Item_id, client.Item_iduom, client.Item_name, client.Item_descp, client.Item_urlimg,
+		client.Item_inventory, client.Item_sales, client.Item_purchase, client.Item_status,
 		client.Sdata, client.Item_idcateitem)
 	if err != nil {
 		c.Status(fiber.StatusBadRequest)
@@ -312,14 +397,115 @@ func ItemSave(c *fiber.Ctx) error {
 		})
 	}
 
-	_deleteredis_item(client.Item_search, client.Item_page)
+	_deleteredis_item(client.Item_search, client.Item_id, client.Item_page)
 	return c.JSON(result)
 }
-func _deleteredis_item(search string, page int) {
+func ItemuomSave(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_itemuomsave)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+	user := c.Locals("jwt").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["name"].(string)
+	temp_decp := helpers.Decryption(name)
+	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
+
+	// admin, iditem, iduom, default_iduom, sData string, idrecord int, convertion float32
+	result, err := models.Save_itemuom(
+		client_admin,
+		client.Itemuom_iditem, client.Itemuom_iduom, client.Itemuom_default,
+		client.Sdata, client.Itemuom_id, client.Itemuom_conversion)
+	if err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	_deleteredis_item(client.Itemuom_search, client.Itemuom_iditem, client.Itemuom_page)
+	return c.JSON(result)
+}
+func ItemuomDelete(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_itemuomdelete)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+	// user := c.Locals("jwt").(*jwt.Token)
+	// claims := user.Claims.(jwt.MapClaims)
+	// name := claims["name"].(string)
+	// temp_decp := helpers.Decryption(name)
+	// _, _ := helpers.Parsing_Decry(temp_decp, "==")
+
+	result, err := models.Delete_itemuom(client.Itemuom_id)
+	if err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	_deleteredis_item(client.Itemuom_search, client.Itemuom_iditem, client.Itemuom_page)
+	return c.JSON(result)
+}
+func _deleteredis_item(search, iditem string, page int) {
 	val_master := helpers.DeleteRedis(Fieldcateitem_home_redis + "_" + strconv.Itoa(page) + "_" + search)
 	fmt.Printf("Redis Delete BACKEND CATEITEM : %d\n", val_master)
 
 	val_master_item := helpers.DeleteRedis(Fielditem_home_redis + "_" + strconv.Itoa(page) + "_" + search)
 	fmt.Printf("Redis Delete BACKEND ITEM : %d\n", val_master_item)
+
+	val_master_itemuom := helpers.DeleteRedis(Fielditemuom_home_redis + "_" + iditem)
+	fmt.Printf("Redis Delete BACKEND ITEMUOM - %s : %d\n", iditem, val_master_itemuom)
 
 }

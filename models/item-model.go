@@ -140,7 +140,7 @@ func Fetch_itemHome(search string, page int) (helpers.Responseitem, error) {
 	sql_select := ""
 	sql_select += "SELECT "
 	sql_select += "A.iditem , A.idcateitem, B.nmcateitem,  "
-	sql_select += "A.nmitem , A.descpitem, A.inventory_item, A.sales_item, A.purchase_item, A.statusitem,  "
+	sql_select += "A.nmitem , A.descpitem, A.urlimgitem, A.inventory_item, A.sales_item, A.purchase_item, A.statusitem,  "
 	sql_select += "A.createitem, to_char(COALESCE(A.createdateitem,now()), 'YYYY-MM-DD HH24:MI:SS'), "
 	sql_select += "A.updateitem, to_char(COALESCE(A.updatedateitem,now()), 'YYYY-MM-DD HH24:MI:SS')  "
 	sql_select += "FROM " + database_item_local + "  as A  "
@@ -158,13 +158,13 @@ func Fetch_itemHome(search string, page int) (helpers.Responseitem, error) {
 	helpers.ErrorCheck(err)
 	for row.Next() {
 		var (
-			idcateitem_db                                                                                                        int
-			iditem_db, nmcateitem_db, nmitem_db, descpitem_db, inventory_item_db, sales_item_db, purchase_item_db, statusitem_db string
-			createitem_db, createdateitem_db, updateitem_db, updatedateitem_db                                                   string
+			idcateitem_db                                                                                                                       int
+			iditem_db, nmcateitem_db, nmitem_db, descpitem_db, urlimgitem_db, inventory_item_db, sales_item_db, purchase_item_db, statusitem_db string
+			createitem_db, createdateitem_db, updateitem_db, updatedateitem_db                                                                  string
 		)
 
 		err = row.Scan(&iditem_db, &idcateitem_db, &nmcateitem_db, &nmitem_db,
-			&descpitem_db, &inventory_item_db, &sales_item_db, &purchase_item_db, &statusitem_db,
+			&descpitem_db, &urlimgitem_db, &inventory_item_db, &sales_item_db, &purchase_item_db, &statusitem_db,
 			&createitem_db, &createdateitem_db, &updateitem_db, &updatedateitem_db)
 
 		helpers.ErrorCheck(err)
@@ -196,8 +196,10 @@ func Fetch_itemHome(search string, page int) (helpers.Responseitem, error) {
 		obj.Item_id = iditem_db
 		obj.Item_idcateitem = idcateitem_db
 		obj.Item_nmcateitem = nmcateitem_db
+		obj.Item_iduom = _Get_item_uom(iditem_db)
 		obj.Item_name = nmitem_db
 		obj.Item_descp = descpitem_db
+		obj.Item_urlimg = urlimgitem_db
 		obj.Item_inventory = inventory_item_db
 		obj.Item_sales = sales_item_db
 		obj.Item_purchase = purchase_item_db
@@ -244,6 +246,73 @@ func Fetch_itemHome(search string, page int) (helpers.Responseitem, error) {
 	res.Listcateitem = arraobjcateitem
 	res.Perpage = perpage
 	res.Totalrecord = totalrecord
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
+func Fetch_itemuom(iditem string) (helpers.Response, error) {
+	var obj entities.Model_itemuom
+	var arraobj []entities.Model_itemuom
+	var res helpers.Response
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "A.id_itemuom , A.iduom, B.nmuom,  "
+	sql_select += "A.default_itemuom , A.conversion_itemuom,  "
+	sql_select += "A.create_itemuom, to_char(COALESCE(A.createdate_itemuom,now()), 'YYYY-MM-DD HH24:MI:SS'), "
+	sql_select += "A.update_itemuom, to_char(COALESCE(A.updatedate_itemuom,now()), 'YYYY-MM-DD HH24:MI:SS')  "
+	sql_select += "FROM " + configs.DB_tbl_mst_item_uom + "  as A  "
+	sql_select += "JOIN " + configs.DB_tbl_mst_uom + "  as B ON B.iduom = A.iduom   "
+	sql_select += "WHERE iditem='" + iditem + "' "
+	sql_select += "ORDER BY A.default_itemuom DESC   "
+
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		var (
+			id_itemuom_db                                                                      int
+			conversion_itemuom_db                                                              float32
+			iduom_db, nmuom_db, default_itemuom_db                                             string
+			create_itemuom_db, createdate_itemuom_db, update_itemuom_db, updatedate_itemuom_db string
+		)
+
+		err = row.Scan(&id_itemuom_db, &iduom_db, &nmuom_db, &default_itemuom_db, &conversion_itemuom_db,
+			&create_itemuom_db, &createdate_itemuom_db, &update_itemuom_db, &updatedate_itemuom_db)
+
+		helpers.ErrorCheck(err)
+		create := ""
+		update := ""
+		status_css := configs.STATUS_CANCEL
+		if create_itemuom_db != "" {
+			create = create_itemuom_db + ", " + createdate_itemuom_db
+		}
+		if update_itemuom_db != "" {
+			update = update_itemuom_db + ", " + updatedate_itemuom_db
+		}
+		if default_itemuom_db == "Y" {
+			status_css = configs.STATUS_COMPLETE
+		}
+
+		obj.Itemuom_id = id_itemuom_db
+		obj.Itemuom_iduom = iduom_db
+		obj.Itemuom_nmuom = nmuom_db
+		obj.Itemuom_default = default_itemuom_db
+		obj.Itemuom_default_css = status_css
+		obj.Itemuom_conversion = conversion_itemuom_db
+		obj.Itemuom_create = create
+		obj.Itemuom_update = update
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+	}
+	defer row.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = arraobj
 	res.Time = time.Since(start).String()
 
 	return res, nil
@@ -304,7 +373,7 @@ func Save_cateitem(admin, name, status, sData string, idrecord int) (helpers.Res
 
 	return res, nil
 }
-func Save_item(admin, idrecord, iduom, name, descp, inventory, sales, purchase, status, sData string, idcateitem int) (helpers.Response, error) {
+func Save_item(admin, idrecord, iduom, name, descp, urlimgitem, inventory, sales, purchase, status, sData string, idcateitem int) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
 	tglnow, _ := goment.New()
@@ -315,12 +384,12 @@ func Save_item(admin, idrecord, iduom, name, descp, inventory, sales, purchase, 
 				insert into
 				` + database_item_local + ` (
 					iditem , idcateitem, nmitem,  
-					descpitem , inventory_item, sales_item, purchase_item, statusitem,
+					descpitem , urlimgitem, inventory_item, sales_item, purchase_item, statusitem,
 					createitem, createdateitem 
 				) values (
 					$1, $2, $3,   
-					$4, $5, $6, $7, $8,  
-					$9, $10 
+					$4, $5, $6, $7, $8, $9,   
+					$10, $11 
 				)
 			`
 		field_column := database_item_local + tglnow.Format("YYYY")
@@ -328,7 +397,7 @@ func Save_item(admin, idrecord, iduom, name, descp, inventory, sales, purchase, 
 		idrecord := "ITEM_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
 		flag_insert, msg_insert := Exec_SQL(sql_insert, database_item_local, "INSERT",
 			idrecord, idcateitem, name,
-			descp, inventory, sales, purchase, status,
+			descp, urlimgitem, inventory, sales, purchase, status,
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
 		if flag_insert {
@@ -367,13 +436,13 @@ func Save_item(admin, idrecord, iduom, name, descp, inventory, sales, purchase, 
 				UPDATE 
 				` + database_item_local + `  
 				SET idcateitem=$1, nmitem=$2,  
-				descpitem=$3, inventory_item=$4, sales_item=$5, purchase_item=$6, statusitem=$7,
-				updateitem=$8, updatedateitem=$9     
-				WHERE iditem=$10    
+				descpitem=$3, urlimgitem=$4 ,inventory_item=$5, sales_item=$6, purchase_item=$7, statusitem=$8,
+				updateitem=$9, updatedateitem=$10     
+				WHERE iditem=$11    
 			`
 
 		flag_update, msg_update := Exec_SQL(sql_update, database_item_local, "UPDATE",
-			idcateitem, name, descp, inventory, sales, purchase, status,
+			idcateitem, name, descp, urlimgitem, inventory, sales, purchase, status,
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
 
 		if flag_update {
@@ -389,4 +458,204 @@ func Save_item(admin, idrecord, iduom, name, descp, inventory, sales, purchase, 
 	res.Time = time.Since(render_page).String()
 
 	return res, nil
+}
+func Save_itemuom(admin, iditem, iduom, default_iduom, sData string, idrecord int, convertion float32) (helpers.Response, error) {
+	var res helpers.Response
+	msg := "Failed"
+	tglnow, _ := goment.New()
+	render_page := time.Now()
+	flag := false
+
+	if sData == "New" {
+		flag = CheckDBTwoField(configs.DB_tbl_mst_item_uom, "iditem", iditem, "iduom", iduom)
+		if !flag {
+			if default_iduom == "Y" {
+				flag_reset := _reset_itemuom(admin, iditem)
+				if flag_reset {
+					sql_insert := `
+						insert into
+						` + configs.DB_tbl_mst_item_uom + ` (
+							id_itemuom, iditem, iduom,  
+							default_itemuom , conversion_itemuom,
+							create_itemuom, createdate_itemuom 
+						) values (
+							$1, $2, $3,   
+							$4, $5, 
+							$6, $7 
+						)
+					`
+					field_column_uom := configs.DB_tbl_mst_item_uom + tglnow.Format("YYYY")
+					idrecord_uom_counter := Get_counter(field_column_uom)
+					idrecord_uom := tglnow.Format("YY") + tglnow.Format("MM") + strconv.Itoa(idrecord_uom_counter)
+					flag_insertuom, msg_insertuom := Exec_SQL(sql_insert, configs.DB_tbl_mst_item_uom, "INSERT",
+						idrecord_uom, iditem, iduom,
+						default_iduom, convertion,
+						admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
+					if flag_insertuom {
+						msg = "Succes"
+					} else {
+						fmt.Println(msg_insertuom)
+					}
+				}
+			} else {
+				sql_insert := `
+					insert into
+					` + configs.DB_tbl_mst_item_uom + ` (
+						id_itemuom, iditem, iduom,  
+						default_itemuom , conversion_itemuom,
+						create_itemuom, createdate_itemuom 
+					) values (
+						$1, $2, $3,   
+						$4, $5, 
+						$6, $7 
+					)
+				`
+				field_column_uom := configs.DB_tbl_mst_item_uom + tglnow.Format("YYYY")
+				idrecord_uom_counter := Get_counter(field_column_uom)
+				idrecord_uom := tglnow.Format("YY") + tglnow.Format("MM") + strconv.Itoa(idrecord_uom_counter)
+				flag_insertuom, msg_insertuom := Exec_SQL(sql_insert, configs.DB_tbl_mst_item_uom, "INSERT",
+					idrecord_uom, iditem, iduom,
+					"N", convertion,
+					admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
+				if flag_insertuom {
+					msg = "Succes"
+				} else {
+					fmt.Println(msg_insertuom)
+				}
+			}
+		} else {
+			msg = "Duplicate Entry"
+		}
+	} else {
+		if default_iduom == "Y" {
+			flag_reset := _reset_itemuom(admin, iditem)
+			if flag_reset {
+				sql_update := `
+					UPDATE 
+					` + configs.DB_tbl_mst_item_uom + `  
+					SET default_itemuom=$1, conversion_itemuom=$2, 
+					update_itemuom=$3, updatedate_itemuom=$4      
+					WHERE id_itemuom=$5      
+				`
+
+				flag_update, msg_update := Exec_SQL(sql_update, configs.DB_tbl_mst_item_uom, "UPDATE",
+					default_iduom, convertion,
+					admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
+
+				if flag_update {
+					msg = "Succes"
+				} else {
+					fmt.Println(msg_update)
+				}
+			}
+		} else {
+			sql_update := `
+				UPDATE 
+				` + configs.DB_tbl_mst_item_uom + `  
+				SET default_itemuom=$1, conversion_itemuom=$2, 
+				update_itemuom=$3, updatedate_itemuom=$4      
+				WHERE id_itemuom=$5      
+			`
+
+			flag_update, msg_update := Exec_SQL(sql_update, configs.DB_tbl_mst_item_uom, "UPDATE",
+				default_iduom, convertion,
+				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
+
+			if flag_update {
+				msg = "Succes"
+			} else {
+				fmt.Println(msg_update)
+			}
+		}
+
+	}
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = nil
+	res.Time = time.Since(render_page).String()
+
+	return res, nil
+}
+func Delete_itemuom(idrecord int) (helpers.Response, error) {
+	var res helpers.Response
+	msg := "Failed"
+	render_page := time.Now()
+	flag := false
+	flag = CheckDB(configs.DB_tbl_mst_item_uom, "id_itemuom", strconv.Itoa(idrecord))
+
+	if flag {
+		sql_delete := `
+				DELETE FROM
+				` + configs.DB_tbl_mst_item_uom + ` 
+				WHERE id_itemuom=$1 
+			`
+		flag_delete, msg_delete := Exec_SQL(sql_delete, configs.DB_tbl_mst_item_uom, "DELETE", idrecord)
+
+		if flag_delete {
+			msg = "Succes"
+		} else {
+			fmt.Println(msg_delete)
+		}
+	} else {
+		msg = "Data Not Found"
+	}
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = nil
+	res.Time = time.Since(render_page).String()
+
+	return res, nil
+}
+
+func _reset_itemuom(admin, iditem string) bool {
+	tglnow, _ := goment.New()
+	flag := false
+
+	flag_check := CheckDB(configs.DB_tbl_mst_item_uom, "iditem", iditem)
+	if flag_check {
+		sql_update := `
+			UPDATE 
+			` + configs.DB_tbl_mst_item_uom + `  
+			SET default_itemuom=$1, 
+			update_itemuom=$2, updatedate_itemuom=$3     
+			WHERE iditem=$4     
+		`
+
+		flag_update, msg_update := Exec_SQL(sql_update, configs.DB_tbl_mst_item_uom, "UPDATE",
+			"N", admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), iditem)
+
+		if flag_update {
+			flag = true
+		} else {
+			fmt.Println(msg_update + " - _reset_itemuom")
+		}
+	} else {
+		flag = true
+	}
+
+	return flag
+}
+func _Get_item_uom(iditem string) string {
+	con := db.CreateCon()
+	ctx := context.Background()
+	nmuom := ""
+	sql_select := `SELECT
+			nmuom    
+			FROM ` + configs.DB_tbl_mst_item_uom + `  as A 
+			JOIN ` + configs.DB_tbl_mst_uom + `  as B ON B.iduom = A.iduom 
+			WHERE iditem='` + iditem + `'     
+			AND default_itemuom='Y' LIMIT 1     
+		`
+
+	row := con.QueryRowContext(ctx, sql_select)
+	switch e := row.Scan(&nmuom); e {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e)
+	}
+
+	return nmuom
 }
