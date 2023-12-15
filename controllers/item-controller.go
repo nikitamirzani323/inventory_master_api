@@ -137,12 +137,15 @@ func Itemhome(c *fiber.Ctx) error {
 
 	var obj entities.Model_item
 	var arraobj []entities.Model_item
+	var objcateitem entities.Model_cateitemshare
+	var arraobjcateitem []entities.Model_cateitemshare
 	render_page := time.Now()
 	resultredis, flag := helpers.GetRedis(Fielditem_home_redis + "_" + strconv.Itoa(client.Item_page) + "_" + client.Item_search)
 	jsonredis := []byte(resultredis)
 	perpage_RD, _ := jsonparser.GetInt(jsonredis, "perpage")
 	totalrecord_RD, _ := jsonparser.GetInt(jsonredis, "totalrecord")
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
+	listcateitem_RD, _, _, _ := jsonparser.Get(jsonredis, "listcateitem")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		item_id, _ := jsonparser.GetString(value, "item_id")
 		item_idcateitem, _ := jsonparser.GetInt(value, "item_idcateitem")
@@ -152,6 +155,9 @@ func Itemhome(c *fiber.Ctx) error {
 		item_inventory, _ := jsonparser.GetString(value, "item_inventory")
 		item_sales, _ := jsonparser.GetString(value, "item_sales")
 		item_purchase, _ := jsonparser.GetString(value, "item_purchase")
+		item_inventory_css, _ := jsonparser.GetString(value, "item_inventory_css")
+		item_sales_css, _ := jsonparser.GetString(value, "item_sales_css")
+		item_purchase_css, _ := jsonparser.GetString(value, "item_purchase_css")
 		item_status, _ := jsonparser.GetString(value, "item_status")
 		item_status_css, _ := jsonparser.GetString(value, "item_status_css")
 		item_create, _ := jsonparser.GetString(value, "item_create")
@@ -165,13 +171,23 @@ func Itemhome(c *fiber.Ctx) error {
 		obj.Item_inventory = item_inventory
 		obj.Item_sales = item_sales
 		obj.Item_purchase = item_purchase
+		obj.Item_inventory_css = item_inventory_css
+		obj.Item_purchase_css = item_purchase_css
+		obj.Item_sales_css = item_sales_css
 		obj.Item_status = item_status
 		obj.Item_status_css = item_status_css
 		obj.Item_create = item_create
 		obj.Item_update = item_update
 		arraobj = append(arraobj, obj)
 	})
+	jsonparser.ArrayEach(listcateitem_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		cateitem_id, _ := jsonparser.GetInt(value, "cateitem_id")
+		cateitem_name, _ := jsonparser.GetString(value, "cateitem_name")
 
+		objcateitem.Cateitem_id = int(cateitem_id)
+		objcateitem.Cateitem_name = cateitem_name
+		arraobjcateitem = append(arraobjcateitem, objcateitem)
+	})
 	if !flag {
 		result, err := models.Fetch_itemHome(client.Item_search, client.Item_page)
 		if err != nil {
@@ -188,12 +204,13 @@ func Itemhome(c *fiber.Ctx) error {
 	} else {
 		fmt.Println("ITEM CACHE")
 		return c.JSON(fiber.Map{
-			"status":      fiber.StatusOK,
-			"message":     "Success",
-			"record":      arraobj,
-			"perpage":     perpage_RD,
-			"totalrecord": totalrecord_RD,
-			"time":        time.Since(render_page).String(),
+			"status":       fiber.StatusOK,
+			"message":      "Success",
+			"record":       arraobj,
+			"listcateitem": arraobjcateitem,
+			"perpage":      perpage_RD,
+			"totalrecord":  totalrecord_RD,
+			"time":         time.Since(render_page).String(),
 		})
 	}
 }
@@ -281,10 +298,10 @@ func ItemSave(c *fiber.Ctx) error {
 	temp_decp := helpers.Decryption(name)
 	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
 
-	// admin, idrecord, name, descp, inventory, sales, purchase, status, sData string, idcateitem int
+	// admin, idrecord, iduom, name, descp, inventory, sales, purchase, status, sData string, idcateitem int
 	result, err := models.Save_item(
 		client_admin,
-		client.Item_id, client.Item_name, client.Item_descp, client.Item_inventory, client.Item_sales, client.Item_purchase, client.Item_status,
+		client.Item_id, client.Item_iduom, client.Item_name, client.Item_descp, client.Item_inventory, client.Item_sales, client.Item_purchase, client.Item_status,
 		client.Sdata, client.Item_idcateitem)
 	if err != nil {
 		c.Status(fiber.StatusBadRequest)

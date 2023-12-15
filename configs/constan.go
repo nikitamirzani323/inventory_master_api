@@ -12,6 +12,7 @@ const (
 	DB_tbl_mst_warehouse_storagebin string = "tbl_mst_warehouse_storage_bin"
 	DB_tbl_mst_categoryitem         string = "tbl_mst_categoryitem"
 	DB_tbl_mst_item                 string = "tbl_mst_item"
+	DB_tbl_mst_item_uom             string = "tbl_mst_item_uom"
 
 	PAGING_PAGE     int    = 50
 	STATUS_NEW      string = "background:#0dcaf0;font-weight:bold;color:black;"

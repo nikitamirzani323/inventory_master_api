@@ -107,10 +107,12 @@ func Fetch_catetemHome(search string, page int) (helpers.Responsepaging, error) 
 
 	return res, nil
 }
-func Fetch_itemHome(search string, page int) (helpers.Responsepaging, error) {
+func Fetch_itemHome(search string, page int) (helpers.Responseitem, error) {
 	var obj entities.Model_item
 	var arraobj []entities.Model_item
-	var res helpers.Responsepaging
+	var objcateitem entities.Model_cateitemshare
+	var arraobjcateitem []entities.Model_cateitemshare
+	var res helpers.Responseitem
 	msg := "Data Not Found"
 	con := db.CreateCon()
 	ctx := context.Background()
@@ -169,6 +171,9 @@ func Fetch_itemHome(search string, page int) (helpers.Responsepaging, error) {
 		create := ""
 		update := ""
 		status_css := configs.STATUS_CANCEL
+		purchase_css := configs.STATUS_CANCEL
+		sales_css := configs.STATUS_CANCEL
+		inventory_css := configs.STATUS_CANCEL
 		if createitem_db != "" {
 			create = createitem_db + ", " + createdateitem_db
 		}
@@ -177,6 +182,15 @@ func Fetch_itemHome(search string, page int) (helpers.Responsepaging, error) {
 		}
 		if statusitem_db == "Y" {
 			status_css = configs.STATUS_COMPLETE
+		}
+		if purchase_item_db == "Y" {
+			purchase_css = configs.STATUS_COMPLETE
+		}
+		if sales_item_db == "Y" {
+			sales_css = configs.STATUS_COMPLETE
+		}
+		if inventory_item_db == "Y" {
+			inventory_css = configs.STATUS_COMPLETE
 		}
 
 		obj.Item_id = iditem_db
@@ -187,6 +201,9 @@ func Fetch_itemHome(search string, page int) (helpers.Responsepaging, error) {
 		obj.Item_inventory = inventory_item_db
 		obj.Item_sales = sales_item_db
 		obj.Item_purchase = purchase_item_db
+		obj.Item_purchase_css = purchase_css
+		obj.Item_sales_css = sales_css
+		obj.Item_inventory_css = inventory_css
 		obj.Item_status = statusitem_db
 		obj.Item_status_css = status_css
 		obj.Item_create = create
@@ -196,9 +213,35 @@ func Fetch_itemHome(search string, page int) (helpers.Responsepaging, error) {
 	}
 	defer row.Close()
 
+	sql_selectcateitem := `SELECT 
+			idcateitem , nmcateitem 
+			FROM ` + database_cateitem_local + ` 
+			WHERE statuscateitem = 'Y' 
+			ORDER BY nmcateitem ASC    
+	`
+	rowcateitem, errcateitem := con.QueryContext(ctx, sql_selectcateitem)
+	helpers.ErrorCheck(errcateitem)
+	for rowcateitem.Next() {
+		var (
+			idcateitem_db int
+			nmcateitem_db string
+		)
+
+		errcateitem = rowcateitem.Scan(&idcateitem_db, &nmcateitem_db)
+
+		helpers.ErrorCheck(errcateitem)
+
+		objcateitem.Cateitem_id = idcateitem_db
+		objcateitem.Cateitem_name = nmcateitem_db
+		arraobjcateitem = append(arraobjcateitem, objcateitem)
+		msg = "Success"
+	}
+	defer rowcateitem.Close()
+
 	res.Status = fiber.StatusOK
 	res.Message = msg
 	res.Record = arraobj
+	res.Listcateitem = arraobjcateitem
 	res.Perpage = perpage
 	res.Totalrecord = totalrecord
 	res.Time = time.Since(start).String()
@@ -261,7 +304,7 @@ func Save_cateitem(admin, name, status, sData string, idrecord int) (helpers.Res
 
 	return res, nil
 }
-func Save_item(admin, idrecord, name, descp, inventory, sales, purchase, status, sData string, idcateitem int) (helpers.Response, error) {
+func Save_item(admin, idrecord, iduom, name, descp, inventory, sales, purchase, status, sData string, idcateitem int) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
 	tglnow, _ := goment.New()
@@ -282,13 +325,40 @@ func Save_item(admin, idrecord, name, descp, inventory, sales, purchase, status,
 			`
 		field_column := database_item_local + tglnow.Format("YYYY")
 		idrecord_counter := Get_counter(field_column)
+		idrecord := "ITEM_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
 		flag_insert, msg_insert := Exec_SQL(sql_insert, database_item_local, "INSERT",
-			"ITEM_"+tglnow.Format("YY")+tglnow.Format("MM")+tglnow.Format("DD")+tglnow.Format("HH")+strconv.Itoa(idrecord_counter), idcateitem, name,
+			idrecord, idcateitem, name,
 			descp, inventory, sales, purchase, status,
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
 		if flag_insert {
 			msg = "Succes"
+			//Default UOM
+			sql_insertuom := `
+					insert into
+					` + configs.DB_tbl_mst_item_uom + ` (
+						id_itemuom , iditem, iduom,  
+						default_itemuom , conversion_itemuom,
+						create_itemuom, createdate_itemuom 
+					) values (
+						$1, $2, $3,   
+						$4, $5, 
+						$6, $7 
+					)
+				`
+			field_column_uom := configs.DB_tbl_mst_item_uom + tglnow.Format("YYYY")
+			idrecord_uom_counter := Get_counter(field_column_uom)
+			idrecord_uom := tglnow.Format("YY") + tglnow.Format("MM") + strconv.Itoa(idrecord_uom_counter)
+			flag_insertuom, msg_insertuom := Exec_SQL(sql_insertuom, configs.DB_tbl_mst_item_uom, "INSERT",
+				idrecord_uom, idrecord, iduom,
+				"Y", 1,
+				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
+			if flag_insertuom {
+				msg = "Succes"
+			} else {
+				fmt.Println(msg_insertuom)
+			}
+
 		} else {
 			fmt.Println(msg_insert)
 		}
