@@ -55,8 +55,6 @@ func Fetch_vendorHome(search string, page int) (helpers.Responsepaging, error) {
 	sql_select += "updatevendor, to_char(COALESCE(updatedatevendor,now()), 'YYYY-MM-DD HH24:MI:SS')  "
 	sql_select += "FROM " + database_vendor_local + "   "
 	if search == "" {
-		sql_selectcount += "WHERE LOWER(idvendor) LIKE '%" + strings.ToLower(search) + "%' "
-		sql_selectcount += "OR LOWER(nmvendor) LIKE '%" + strings.ToLower(search) + "%' "
 		sql_select += "ORDER BY createdatevendor DESC  OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
 
 	} else {
