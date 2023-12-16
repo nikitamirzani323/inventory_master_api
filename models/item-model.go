@@ -34,7 +34,7 @@ func Fetch_catetemHome(search string, page int) (helpers.Responsepaging, error) 
 	sql_selectcount := ""
 	sql_selectcount += ""
 	sql_selectcount += "SELECT "
-	sql_selectcount += "COUNT(idcateitem) as totalpattern  "
+	sql_selectcount += "COUNT(idcateitem) as totalcateitem  "
 	sql_selectcount += "FROM " + database_cateitem_local + "  "
 	if search != "" {
 		sql_selectcount += "WHERE LOWER(nmcateitem) LIKE '%" + strings.ToLower(search) + "%' "
@@ -124,7 +124,7 @@ func Fetch_itemHome(search string, page int) (helpers.Responseitem, error) {
 	sql_selectcount := ""
 	sql_selectcount += ""
 	sql_selectcount += "SELECT "
-	sql_selectcount += "COUNT(iditem) as totalpattern  "
+	sql_selectcount += "COUNT(iditem) as totalitem  "
 	sql_selectcount += "FROM " + database_item_local + "  "
 	if search != "" {
 		sql_selectcount += "WHERE LOWER(nmitem) LIKE '%" + strings.ToLower(search) + "%' "
