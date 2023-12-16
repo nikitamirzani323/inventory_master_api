@@ -49,8 +49,8 @@ func Fetch_vendorHome(search string, page int) (helpers.Responsepaging, error) {
 
 	sql_select := ""
 	sql_select += "SELECT "
-	sql_select += "idvendor , nmvendor, "
-	sql_select += "alamatvendor ,phone1vendor, phone2vendor, statusvendor,  "
+	sql_select += "idvendor , nmvendor, picvendor, "
+	sql_select += "alamatvendor, emailvendor, phone1vendor, phone2vendor, statusvendor,  "
 	sql_select += "createvendor, to_char(COALESCE(createdatevendor,now()), 'YYYY-MM-DD HH24:MI:SS'), "
 	sql_select += "updatevendor, to_char(COALESCE(updatedatevendor,now()), 'YYYY-MM-DD HH24:MI:SS')  "
 	sql_select += "FROM " + database_vendor_local + "   "
@@ -69,13 +69,13 @@ func Fetch_vendorHome(search string, page int) (helpers.Responsepaging, error) {
 	helpers.ErrorCheck(err)
 	for row.Next() {
 		var (
-			idvendor_db, nmvendor_db                                                   string
-			alamatvendor_db, phone1vendor_db, phone2vendor_db, statusvendor_db         string
-			createvendor_db, createdatevendor_db, updatevendor_db, updatedatevendor_db string
+			idvendor_db, nmvendor_db, picvendor_db                                             string
+			alamatvendor_db, emailvendor_db, phone1vendor_db, phone2vendor_db, statusvendor_db string
+			createvendor_db, createdatevendor_db, updatevendor_db, updatedatevendor_db         string
 		)
 
-		err = row.Scan(&idvendor_db, &nmvendor_db, &alamatvendor_db, &phone1vendor_db,
-			&phone2vendor_db, &statusvendor_db,
+		err = row.Scan(&idvendor_db, &nmvendor_db, &picvendor_db, &alamatvendor_db,
+			&emailvendor_db, &phone1vendor_db, &phone2vendor_db, &statusvendor_db,
 			&createvendor_db, &createdatevendor_db, &updatevendor_db, &updatedatevendor_db)
 
 		helpers.ErrorCheck(err)
@@ -94,7 +94,9 @@ func Fetch_vendorHome(search string, page int) (helpers.Responsepaging, error) {
 
 		obj.Vendor_id = idvendor_db
 		obj.Vendor_name = nmvendor_db
+		obj.Vendor_pic = picvendor_db
 		obj.Vendor_alamat = alamatvendor_db
+		obj.Vendor_email = emailvendor_db
 		obj.Vendor_phone1 = phone1vendor_db
 		obj.Vendor_phone2 = phone2vendor_db
 		obj.Vendor_status = statusvendor_db
@@ -115,7 +117,7 @@ func Fetch_vendorHome(search string, page int) (helpers.Responsepaging, error) {
 
 	return res, nil
 }
-func Save_vendor(admin, idrecord, name, alamat, phone1, phone2, status, sData string) (helpers.Response, error) {
+func Save_vendor(admin, idrecord, name, pic, alamat, email, phone1, phone2, status, sData string) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
 	tglnow, _ := goment.New()
@@ -125,21 +127,21 @@ func Save_vendor(admin, idrecord, name, alamat, phone1, phone2, status, sData st
 		sql_insert := `
 				insert into
 				` + database_vendor_local + ` (
-					idvendor , nmvendor,  
-					alamatvendor , phone1vendor, phone2vendor, statusvendor,
+					idvendor , nmvendor, picvendor, 
+					alamatvendor,emailvendor, phone1vendor, phone2vendor, statusvendor,
 					createvendor, createdatevendor 
 				) values (
-					$1, $2,    
-					$3, $4, $5, $6, 
-					$7, $8 
+					$1, $2, $3,    
+					$4, $5, $6, $7, $8,  
+					$9, $10 
 				)
 			`
 		field_column := database_vendor_local + tglnow.Format("YYYY")
 		idrecord_counter := Get_counter(field_column)
 		idrecord := "VENDOR_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
 		flag_insert, msg_insert := Exec_SQL(sql_insert, database_vendor_local, "INSERT",
-			idrecord, name,
-			alamat, phone1, phone2, status,
+			idrecord, name, pic,
+			alamat, email, phone1, phone2, status,
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
 		if flag_insert {
@@ -150,15 +152,15 @@ func Save_vendor(admin, idrecord, name, alamat, phone1, phone2, status, sData st
 	} else {
 		sql_update := `
 				UPDATE 
-				` + database_item_local + `  
-				SET nmvendor=$1, alamatvendor=$2,  
-				phone1vendor=$3, phone2vendor=$4 ,statusvendor=$5, 
-				updatevendor=$6, updatedatevendor=$7      
-				WHERE idvendor=$8     
+				` + database_vendor_local + `  
+				SET nmvendor=$1, picvendor=$2, alamatvendor=$3,  
+				emailvendor=$4, phone1vendor=$5, phone2vendor=$6 ,statusvendor=$7, 
+				updatevendor=$8, updatedatevendor=$9       
+				WHERE idvendor=$10     
 			`
 
-		flag_update, msg_update := Exec_SQL(sql_update, database_item_local, "UPDATE",
-			name, alamat, phone1, phone2, status,
+		flag_update, msg_update := Exec_SQL(sql_update, database_vendor_local, "UPDATE",
+			name, pic, alamat, email, phone1, phone2, status,
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
 
 		if flag_update {

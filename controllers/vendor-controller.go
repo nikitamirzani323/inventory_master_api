@@ -61,7 +61,9 @@ func Vendorhome(c *fiber.Ctx) error {
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		vendor_id, _ := jsonparser.GetString(value, "vendor_id")
 		vendor_name, _ := jsonparser.GetString(value, "vendor_name")
+		vendor_pic, _ := jsonparser.GetString(value, "vendor_pic")
 		vendor_alamat, _ := jsonparser.GetString(value, "vendor_alamat")
+		vendor_email, _ := jsonparser.GetString(value, "vendor_email")
 		vendor_phone1, _ := jsonparser.GetString(value, "vendor_phone1")
 		vendor_phone2, _ := jsonparser.GetString(value, "vendor_phone2")
 		vendor_status, _ := jsonparser.GetString(value, "vendor_status")
@@ -71,7 +73,9 @@ func Vendorhome(c *fiber.Ctx) error {
 
 		obj.Vendor_id = vendor_id
 		obj.Vendor_name = vendor_name
+		obj.Vendor_pic = vendor_pic
 		obj.Vendor_alamat = vendor_alamat
+		obj.Vendor_email = vendor_email
 		obj.Vendor_phone1 = vendor_phone1
 		obj.Vendor_phone2 = vendor_phone2
 		obj.Vendor_status = vendor_status
@@ -140,11 +144,11 @@ func VendorSave(c *fiber.Ctx) error {
 	temp_decp := helpers.Decryption(name)
 	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
 
-	// admin, idrecord, name, alamat, phone1, phone2, status, sData string
+	// admin, idrecord, name, pic, alamat, email, phone1, phone2, status, sData string
 	result, err := models.Save_vendor(
 		client_admin,
-		client.Vendor_id, client.Vendor_name,
-		client.Vendor_alamat, client.Vendor_phone1, client.Vendor_phone2, client.Vendor_status,
+		client.Vendor_id, client.Vendor_name, client.Vendor_pic,
+		client.Vendor_alamat, client.Vendor_email, client.Vendor_phone1, client.Vendor_phone2, client.Vendor_status,
 		client.Sdata)
 	if err != nil {
 		c.Status(fiber.StatusBadRequest)
