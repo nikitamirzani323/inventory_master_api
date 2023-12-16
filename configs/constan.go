@@ -11,6 +11,7 @@ const (
 	DB_tbl_mst_warehouse_storage    string = "tbl_mst_warehouse_storage"
 	DB_tbl_mst_warehouse_storagebin string = "tbl_mst_warehouse_storage_bin"
 	DB_tbl_mst_departement          string = "tbl_mst_departement"
+	DB_tbl_mst_employee             string = "tbl_mst_employee"
 	DB_tbl_mst_vendor               string = "tbl_mst_vendor"
 	DB_tbl_mst_categoryitem         string = "tbl_mst_categoryitem"
 	DB_tbl_mst_item                 string = "tbl_mst_item"
