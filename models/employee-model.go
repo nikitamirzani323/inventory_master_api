@@ -18,10 +18,12 @@ import (
 
 const database_employee_local = configs.DB_tbl_mst_employee
 
-func Fetch_employeeHome(search string, page int) (helpers.Responsepaging, error) {
+func Fetch_employeeHome(search string, page int) (helpers.Responseemployee, error) {
 	var obj entities.Model_employee
 	var arraobj []entities.Model_employee
-	var res helpers.Responsepaging
+	var objdepartement entities.Model_departementshare
+	var arraobjdepartement []entities.Model_departementshare
+	var res helpers.Responseemployee
 	msg := "Data Not Found"
 	con := db.CreateCon()
 	ctx := context.Background()
@@ -108,9 +110,34 @@ func Fetch_employeeHome(search string, page int) (helpers.Responsepaging, error)
 	}
 	defer row.Close()
 
+	sql_selectdepartement := `SELECT 
+			iddepartement, nmdepartement  
+			FROM ` + configs.DB_tbl_mst_departement + ` 
+			WHERE statusdepartement = 'Y' 
+			ORDER BY nmdepartement ASC    
+	`
+	rowdepartement, errdepartement := con.QueryContext(ctx, sql_selectdepartement)
+	helpers.ErrorCheck(errdepartement)
+	for rowdepartement.Next() {
+		var (
+			iddepartement_db, nmdepartement_db string
+		)
+
+		errdepartement = rowdepartement.Scan(&iddepartement_db, &nmdepartement_db)
+
+		helpers.ErrorCheck(errdepartement)
+
+		objdepartement.Departement_id = iddepartement_db
+		objdepartement.Departement_name = nmdepartement_db
+		arraobjdepartement = append(arraobjdepartement, objdepartement)
+		msg = "Success"
+	}
+	defer rowdepartement.Close()
+
 	res.Status = fiber.StatusOK
 	res.Message = msg
 	res.Record = arraobj
+	res.Listdepartement = arraobjdepartement
 	res.Perpage = perpage
 	res.Totalrecord = totalrecord
 	res.Time = time.Since(start).String()

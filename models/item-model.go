@@ -465,14 +465,16 @@ func Save_itemuom(admin, iditem, iduom, default_iduom, sData string, idrecord in
 	tglnow, _ := goment.New()
 	render_page := time.Now()
 	flag := false
-
+	total_itemuom := 0
 	if sData == "New" {
-		flag = CheckDBTwoField(configs.DB_tbl_mst_item_uom, "iditem", iditem, "iduom", iduom)
-		if !flag {
-			if default_iduom == "Y" {
-				flag_reset := _reset_itemuom(admin, iditem)
-				if flag_reset {
-					sql_insert := `
+		total_itemuom = _total_item_uom(iditem)
+		if total_itemuom < 4 {
+			flag = CheckDBTwoField(configs.DB_tbl_mst_item_uom, "iditem", iditem, "iduom", iduom)
+			if !flag {
+				if default_iduom == "Y" {
+					flag_reset := _reset_itemuom(admin, iditem)
+					if flag_reset {
+						sql_insert := `
 						insert into
 						` + configs.DB_tbl_mst_item_uom + ` (
 							id_itemuom, iditem, iduom,  
@@ -484,21 +486,21 @@ func Save_itemuom(admin, iditem, iduom, default_iduom, sData string, idrecord in
 							$6, $7 
 						)
 					`
-					field_column_uom := configs.DB_tbl_mst_item_uom + tglnow.Format("YYYY")
-					idrecord_uom_counter := Get_counter(field_column_uom)
-					idrecord_uom := tglnow.Format("YY") + tglnow.Format("MM") + strconv.Itoa(idrecord_uom_counter)
-					flag_insertuom, msg_insertuom := Exec_SQL(sql_insert, configs.DB_tbl_mst_item_uom, "INSERT",
-						idrecord_uom, iditem, iduom,
-						default_iduom, convertion,
-						admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
-					if flag_insertuom {
-						msg = "Succes"
-					} else {
-						fmt.Println(msg_insertuom)
+						field_column_uom := configs.DB_tbl_mst_item_uom + tglnow.Format("YYYY")
+						idrecord_uom_counter := Get_counter(field_column_uom)
+						idrecord_uom := tglnow.Format("YY") + tglnow.Format("MM") + strconv.Itoa(idrecord_uom_counter)
+						flag_insertuom, msg_insertuom := Exec_SQL(sql_insert, configs.DB_tbl_mst_item_uom, "INSERT",
+							idrecord_uom, iditem, iduom,
+							default_iduom, convertion,
+							admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
+						if flag_insertuom {
+							msg = "Succes"
+						} else {
+							fmt.Println(msg_insertuom)
+						}
 					}
-				}
-			} else {
-				sql_insert := `
+				} else {
+					sql_insert := `
 					insert into
 					` + configs.DB_tbl_mst_item_uom + ` (
 						id_itemuom, iditem, iduom,  
@@ -510,22 +512,26 @@ func Save_itemuom(admin, iditem, iduom, default_iduom, sData string, idrecord in
 						$6, $7 
 					)
 				`
-				field_column_uom := configs.DB_tbl_mst_item_uom + tglnow.Format("YYYY")
-				idrecord_uom_counter := Get_counter(field_column_uom)
-				idrecord_uom := tglnow.Format("YY") + tglnow.Format("MM") + strconv.Itoa(idrecord_uom_counter)
-				flag_insertuom, msg_insertuom := Exec_SQL(sql_insert, configs.DB_tbl_mst_item_uom, "INSERT",
-					idrecord_uom, iditem, iduom,
-					"N", convertion,
-					admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
-				if flag_insertuom {
-					msg = "Succes"
-				} else {
-					fmt.Println(msg_insertuom)
+					field_column_uom := configs.DB_tbl_mst_item_uom + tglnow.Format("YYYY")
+					idrecord_uom_counter := Get_counter(field_column_uom)
+					idrecord_uom := tglnow.Format("YY") + tglnow.Format("MM") + strconv.Itoa(idrecord_uom_counter)
+					flag_insertuom, msg_insertuom := Exec_SQL(sql_insert, configs.DB_tbl_mst_item_uom, "INSERT",
+						idrecord_uom, iditem, iduom,
+						"N", convertion,
+						admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
+					if flag_insertuom {
+						msg = "Succes"
+					} else {
+						fmt.Println(msg_insertuom)
+					}
 				}
+			} else {
+				msg = "Duplicate Entry"
 			}
 		} else {
-			msg = "Duplicate Entry"
+			msg = "The maximum allowed for this uom is only 3"
 		}
+
 	} else {
 		if default_iduom == "Y" {
 			flag_reset := _reset_itemuom(admin, iditem)
@@ -567,7 +573,6 @@ func Save_itemuom(admin, iditem, iduom, default_iduom, sData string, idrecord in
 				fmt.Println(msg_update)
 			}
 		}
-
 	}
 
 	res.Status = fiber.StatusOK
@@ -658,4 +663,24 @@ func _Get_item_uom(iditem string) string {
 	}
 
 	return nmuom
+}
+func _total_item_uom(iditem string) int {
+	con := db.CreateCon()
+	ctx := context.Background()
+	total_itemuom := 0
+	sql_select := `SELECT
+			COUNT(id_itemuom) as total    
+			FROM ` + configs.DB_tbl_mst_item_uom + `  
+			WHERE iditem='` + iditem + `'     
+		`
+
+	row := con.QueryRowContext(ctx, sql_select)
+	switch e := row.Scan(&total_itemuom); e {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e)
+	}
+
+	return total_itemuom
 }

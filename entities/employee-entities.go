@@ -29,6 +29,6 @@ type Controller_employeesave struct {
 	Employee_status        string `json:"employee_status" validate:"required"`
 }
 type Controller_employee struct {
-	Departement_search string `json:"departement_search"`
-	Departement_page   int    `json:"departement_page"`
+	Employee_search string `json:"employee_search"`
+	Employee_page   int    `json:"employee_page"`
 }
