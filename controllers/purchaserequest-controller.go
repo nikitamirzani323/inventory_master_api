@@ -73,6 +73,9 @@ func Purchaserequesthome(c *fiber.Ctx) error {
 		purchaserequest_periodedoc, _ := jsonparser.GetString(value, "purchaserequest_periodedoc")
 		purchaserequest_nmdepartement, _ := jsonparser.GetString(value, "purchaserequest_nmdepartement")
 		purchaserequest_nmemployee, _ := jsonparser.GetString(value, "purchaserequest_nmemployee")
+		purchaserequest_totalitem, _ := jsonparser.GetFloat(value, "purchaserequest_totalitem")
+		purchaserequest_totalpr, _ := jsonparser.GetFloat(value, "purchaserequest_totalpr")
+		purchaserequest_totalpo, _ := jsonparser.GetFloat(value, "purchaserequest_totalpo")
 		purchaserequest_status, _ := jsonparser.GetString(value, "purchaserequest_status")
 		purchaserequest_status_css, _ := jsonparser.GetString(value, "purchaserequest_status_css")
 		purchaserequest_create, _ := jsonparser.GetString(value, "purchaserequest_create")
@@ -86,6 +89,9 @@ func Purchaserequesthome(c *fiber.Ctx) error {
 		obj.Purchaserequest_periodedoc = purchaserequest_periodedoc
 		obj.Purchaserequest_nmdepartement = purchaserequest_nmdepartement
 		obj.Purchaserequest_nmemployee = purchaserequest_nmemployee
+		obj.Purchaserequest_totalitem = float64(purchaserequest_totalitem)
+		obj.Purchaserequest_totalpr = float64(purchaserequest_totalpr)
+		obj.Purchaserequest_totalpo = float64(purchaserequest_totalpo)
 		obj.Purchaserequest_status = purchaserequest_status
 		obj.Purchaserequest_status_css = purchaserequest_status_css
 		obj.Purchaserequest_create = purchaserequest_create
