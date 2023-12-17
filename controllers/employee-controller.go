@@ -125,7 +125,7 @@ func Employeehome(c *fiber.Ctx) error {
 }
 func EmployeeSave(c *fiber.Ctx) error {
 	var errors []*helpers.ErrorResponse
-	client := new(entities.Controller_departementsave)
+	client := new(entities.Controller_employeesave)
 	validate := validator.New()
 	if err := c.BodyParser(client); err != nil {
 		c.Status(fiber.StatusBadRequest)
@@ -157,10 +157,12 @@ func EmployeeSave(c *fiber.Ctx) error {
 	temp_decp := helpers.Decryption(name)
 	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
 
-	// admin, idrecord, name, status, sData string
-	result, err := models.Save_departement(
+	// admin, idrecord, iddepart, name, alamat, email, phone1, phone2, status, sData string
+	result, err := models.Save_employee(
 		client_admin,
-		client.Departement_id, client.Departement_name, client.Departement_status, client.Sdata)
+		client.Employee_id, client.Employee_iddepartement, client.Employee_name,
+		client.Employee_alamat, client.Employee_email, client.Employee_phone1, client.Employee_phone2,
+		client.Employee_status, client.Sdata)
 	if err != nil {
 		c.Status(fiber.StatusBadRequest)
 		return c.JSON(fiber.Map{
@@ -170,7 +172,7 @@ func EmployeeSave(c *fiber.Ctx) error {
 		})
 	}
 
-	_deleteredis_employee(client.Departement_search, client.Departement_page)
+	_deleteredis_employee(client.Employee_search, client.Employee_page)
 	return c.JSON(result)
 }
 func _deleteredis_employee(search string, page int) {

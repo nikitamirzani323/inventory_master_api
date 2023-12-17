@@ -93,7 +93,7 @@ func Fetch_employeeHome(search string, page int) (helpers.Responseemployee, erro
 			status_css = configs.STATUS_COMPLETE
 		}
 
-		obj.Employee_id = iddepartement_db
+		obj.Employee_id = idemployee_db
 		obj.Employee_iddepartement = iddepartement_db
 		obj.Employee_nmdepartement = nmdepartement_db
 		obj.Employee_name = nmemployee_db
@@ -180,9 +180,9 @@ func Save_employee(admin, idrecord, iddepart, name, alamat, email, phone1, phone
 				UPDATE 
 				` + database_employee_local + `  
 				SET nmemployee=$1, alamatemployee=$2, 
-				emailemployee=$1, phone1employee=$2, phone2employee=$1, statusemployee=$2,
-				updateemployee=$3, updatedateemployee=$4        
-				WHERE idemployee=$5      
+				emailemployee=$3, phone1employee=$4, phone2employee=$5, statusemployee=$6,
+				updateemployee=$7, updatedateemployee=$8         
+				WHERE idemployee=$9       
 			`
 
 		flag_update, msg_update := Exec_SQL(sql_update, database_employee_local, "UPDATE",

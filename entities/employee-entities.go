@@ -26,6 +26,10 @@ type Controller_employeesave struct {
 	Employee_id            string `json:"employee_id"`
 	Employee_iddepartement string `json:"employee_iddepartement" validate:"required"`
 	Employee_name          string `json:"employee_name" validate:"required"`
+	Employee_alamat        string `json:"employee_alamat"`
+	Employee_email         string `json:"employee_email"`
+	Employee_phone1        string `json:"employee_phone1" validate:"required"`
+	Employee_phone2        string `json:"employee_phone2"`
 	Employee_status        string `json:"employee_status" validate:"required"`
 }
 type Controller_employee struct {
