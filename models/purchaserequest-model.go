@@ -106,6 +106,9 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 		obj.Purchaserequest_nmemployee = nmemployee_db
 		obj.Purchaserequest_tipedoc = tipe_document_db
 		obj.Purchaserequest_periodedoc = periode_document_db
+		obj.Purchaserequest_totalitem = 0
+		obj.Purchaserequest_totalpr = 0
+		obj.Purchaserequest_totalpo = 0
 		obj.Purchaserequest_status = statupurchaserequest_db
 		obj.Purchaserequest_status_css = status_css
 		obj.Purchaserequest_create = create
