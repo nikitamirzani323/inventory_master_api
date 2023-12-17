@@ -23,6 +23,8 @@ const database_purchaserequestdetail_local = configs.DB_tbl_trx_purchaserequest_
 func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchaserequest, error) {
 	var obj entities.Model_purchaserequest
 	var arraobj []entities.Model_purchaserequest
+	var objbranch entities.Model_branchshare
+	var arraobjbranch []entities.Model_branchshare
 	var objdepartement entities.Model_departementshare
 	var arraobjdepartement []entities.Model_departementshare
 	var objcurr entities.Model_currshare
@@ -54,12 +56,14 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 
 	sql_select := ""
 	sql_select += "SELECT "
-	sql_select += "A.idpurchaserequest , A.iddepartement, B.nmdepartement, A.idemployee, C.nmemployee , A.idcurr, A.tipe_document, A.periode_document, A.statupurchaserequest,  "
+	sql_select += "A.idpurchaserequest, A.idbranch,B.nmbranch, A.iddepartement, C.nmdepartement, "
+	sql_select += "A.idemployee, D.nmemployee , A.idcurr, A.tipe_document, A.periode_document, A.statupurchaserequest,  "
 	sql_select += "A.createpurchaserequest, to_char(COALESCE(A.createdatepurchaserequest,now()), 'YYYY-MM-DD HH24:MI:SS'), "
 	sql_select += "A.updatepurchaserequest, to_char(COALESCE(A.updatedatepurchaserequest,now()), 'YYYY-MM-DD HH24:MI:SS')  "
 	sql_select += "FROM " + database_purchaserequest_local + " as A   "
-	sql_select += "JOIN " + configs.DB_tbl_mst_departement + " as B ON B.iddepartement = A.iddepartement   "
-	sql_select += "JOIN " + configs.DB_tbl_mst_employee + " as C ON C.idemployee = A.idemployee   "
+	sql_select += "JOIN " + configs.DB_tbl_mst_branch + " as B ON B.idbranch = A.idbranch   "
+	sql_select += "JOIN " + configs.DB_tbl_mst_departement + " as C ON C.iddepartement = A.iddepartement   "
+	sql_select += "JOIN " + configs.DB_tbl_mst_employee + " as D ON D.idemployee = A.idemployee   "
 	if search == "" {
 		sql_select += "ORDER BY A.createdatepurchaserequest DESC  OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
 
@@ -72,12 +76,12 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 	helpers.ErrorCheck(err)
 	for row.Next() {
 		var (
-			idpurchaserequest_db, iddepartement_db, nmdepartement_db                                                       string
+			idpurchaserequest_db, idbranch_db, nmbranch_db, iddepartement_db, nmdepartement_db                             string
 			idemployee_db, nmemployee_db, idcurr_db, tipe_document_db, periode_document_db, statupurchaserequest_db        string
 			createpurchaserequest_db, createdatepurchaserequest_db, updatepurchaserequest_db, updatedatepurchaserequest_db string
 		)
 
-		err = row.Scan(&idpurchaserequest_db, &iddepartement_db, &nmdepartement_db,
+		err = row.Scan(&idpurchaserequest_db, &idbranch_db, &nmbranch_db, &iddepartement_db, &nmdepartement_db,
 			&idemployee_db, &nmemployee_db, &idcurr_db, &tipe_document_db, &periode_document_db, &statupurchaserequest_db,
 			&createpurchaserequest_db, &createdatepurchaserequest_db, &updatepurchaserequest_db, &updatedatepurchaserequest_db)
 
@@ -92,6 +96,8 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 			update = updatepurchaserequest_db + ", " + updatedatepurchaserequest_db
 		}
 		switch statupurchaserequest_db {
+		case "OPEN":
+			status_css = configs.STATUS_NEW2
 		case "PROCESS":
 			status_css = configs.STATUS_RUNNING
 		case "COMPLETE":
@@ -102,6 +108,8 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 
 		obj.Purchaserequest_id = idpurchaserequest_db
 		obj.Purchaserequest_idcurr = idcurr_db
+		obj.Purchaserequest_idbranch = idbranch_db
+		obj.Purchaserequest_nmbranch = nmbranch_db
 		obj.Purchaserequest_iddepartement = iddepartement_db
 		obj.Purchaserequest_nmdepartement = nmdepartement_db
 		obj.Purchaserequest_idemployee = idemployee_db
@@ -119,6 +127,30 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 		msg = "Success"
 	}
 	defer row.Close()
+
+	sql_selectbranch := `SELECT 
+			idbranch, nmbranch  
+			FROM ` + configs.DB_tbl_mst_branch + ` 
+			WHERE statusbranch = 'Y' 
+			ORDER BY nmbranch ASC    
+	`
+	rowbranch, errbranch := con.QueryContext(ctx, sql_selectbranch)
+	helpers.ErrorCheck(errbranch)
+	for rowbranch.Next() {
+		var (
+			idbranch_db, nmbranch_db string
+		)
+
+		errbranch = rowbranch.Scan(&idbranch_db, &nmbranch_db)
+
+		helpers.ErrorCheck(errbranch)
+
+		objbranch.Branch_id = idbranch_db
+		objbranch.Branch_name = nmbranch_db
+		arraobjbranch = append(arraobjbranch, objbranch)
+		msg = "Success"
+	}
+	defer rowbranch.Close()
 
 	sql_selectdepartement := `SELECT 
 			iddepartement, nmdepartement  
@@ -169,6 +201,7 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 	res.Status = fiber.StatusOK
 	res.Message = msg
 	res.Record = arraobj
+	res.Listbranch = arraobjbranch
 	res.Listdepartement = arraobjdepartement
 	res.Listcurr = arraobjcurr
 	res.Perpage = perpage
@@ -177,7 +210,7 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 
 	return res, nil
 }
-func Save_purchaserequest(admin, idrecord, iddepartement, idemployee, idcurr, tipedoc, status, listdetail, sData string) (helpers.Response, error) {
+func Save_purchaserequest(admin, idrecord, idbranch, iddepartement, idemployee, idcurr, tipedoc, status, listdetail, sData string) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
 	tglnow, _ := goment.New()
@@ -187,13 +220,13 @@ func Save_purchaserequest(admin, idrecord, iddepartement, idemployee, idcurr, ti
 		sql_insert := `
 				insert into
 				` + database_purchaserequest_local + ` (
-					idpurchaserequest , iddepartement, idemployee, idcurr,  
+					idpurchaserequest , idbranch, iddepartement, idemployee, idcurr,  
 					tipe_document , periode_document, statupurchaserequest,  
 					createpurchaserequest, createdatepurchaserequest 
 				) values (
-					$1, $2, $3, $4,     
-					$5, $6, $7, 
-					$8, $9   
+					$1, $2, $3, $4, $5,      
+					$6, $7, $8, 
+					$9, $10   
 				)
 			`
 		field_column := database_purchaserequest_local + tglnow.Format("YYYY")
@@ -201,8 +234,8 @@ func Save_purchaserequest(admin, idrecord, iddepartement, idemployee, idcurr, ti
 		idrecord := "PR_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
 		periode_doc := tglnow.Format("MM") + tglnow.Format("DDDD")
 		flag_insert, msg_insert := Exec_SQL(sql_insert, database_purchaserequest_local, "INSERT",
-			idrecord, iddepartement, idemployee, idcurr,
-			tipedoc, periode_doc, status,
+			idrecord, idbranch, iddepartement, idemployee, idcurr,
+			tipedoc, periode_doc, "OPEN",
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
 		if flag_insert {

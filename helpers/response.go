@@ -18,6 +18,7 @@ type Responsepurchaserequest struct {
 	Status          int         `json:"status"`
 	Message         string      `json:"message"`
 	Record          interface{} `json:"record"`
+	Listbranch      interface{} `json:"listbranch"`
 	Listdepartement interface{} `json:"listdepartement"`
 	Listcurr        interface{} `json:"listcurr"`
 	Perpage         int         `json:"perpage"`

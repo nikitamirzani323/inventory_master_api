@@ -52,6 +52,8 @@ func Purchaserequesthome(c *fiber.Ctx) error {
 
 	var obj entities.Model_purchaserequest
 	var arraobj []entities.Model_purchaserequest
+	var objbranch entities.Model_branchshare
+	var arraobjbranch []entities.Model_branchshare
 	var objdepartement entities.Model_departementshare
 	var arraobjdepartement []entities.Model_departementshare
 	var objcurr entities.Model_currshare
@@ -62,15 +64,18 @@ func Purchaserequesthome(c *fiber.Ctx) error {
 	perpage_RD, _ := jsonparser.GetInt(jsonredis, "perpage")
 	totalrecord_RD, _ := jsonparser.GetInt(jsonredis, "totalrecord")
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
+	Listbranch_RD, _, _, _ := jsonparser.Get(jsonredis, "listbranch")
 	Listdepartement_RD, _, _, _ := jsonparser.Get(jsonredis, "listdepartement")
 	Listcurr_RD, _, _, _ := jsonparser.Get(jsonredis, "listcurr")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		purchaserequest_id, _ := jsonparser.GetString(value, "purchaserequest_id")
+		purchaserequest_idbranch, _ := jsonparser.GetString(value, "purchaserequest_idbranch")
 		purchaserequest_iddepartement, _ := jsonparser.GetString(value, "purchaserequest_iddepartement")
 		purchaserequest_idemployee, _ := jsonparser.GetString(value, "purchaserequest_idemployee")
 		purchaserequest_idcurr, _ := jsonparser.GetString(value, "purchaserequest_idcurr")
 		purchaserequest_tipedoc, _ := jsonparser.GetString(value, "purchaserequest_tipedoc")
 		purchaserequest_periodedoc, _ := jsonparser.GetString(value, "purchaserequest_periodedoc")
+		purchaserequest_nmbranch, _ := jsonparser.GetString(value, "purchaserequest_nmbranch")
 		purchaserequest_nmdepartement, _ := jsonparser.GetString(value, "purchaserequest_nmdepartement")
 		purchaserequest_nmemployee, _ := jsonparser.GetString(value, "purchaserequest_nmemployee")
 		purchaserequest_totalitem, _ := jsonparser.GetFloat(value, "purchaserequest_totalitem")
@@ -82,11 +87,13 @@ func Purchaserequesthome(c *fiber.Ctx) error {
 		purchaserequest_update, _ := jsonparser.GetString(value, "purchaserequest_update")
 
 		obj.Purchaserequest_id = purchaserequest_id
-		obj.Purchaserequest_iddepartement = purchaserequest_iddepartement
+		obj.Purchaserequest_idbranch = purchaserequest_iddepartement
+		obj.Purchaserequest_iddepartement = purchaserequest_idbranch
 		obj.Purchaserequest_idemployee = purchaserequest_idemployee
 		obj.Purchaserequest_idcurr = purchaserequest_idcurr
 		obj.Purchaserequest_tipedoc = purchaserequest_tipedoc
 		obj.Purchaserequest_periodedoc = purchaserequest_periodedoc
+		obj.Purchaserequest_nmbranch = purchaserequest_nmbranch
 		obj.Purchaserequest_nmdepartement = purchaserequest_nmdepartement
 		obj.Purchaserequest_nmemployee = purchaserequest_nmemployee
 		obj.Purchaserequest_totalitem = float64(purchaserequest_totalitem)
@@ -97,6 +104,14 @@ func Purchaserequesthome(c *fiber.Ctx) error {
 		obj.Purchaserequest_create = purchaserequest_create
 		obj.Purchaserequest_update = purchaserequest_update
 		arraobj = append(arraobj, obj)
+	})
+	jsonparser.ArrayEach(Listbranch_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		branch_id, _ := jsonparser.GetString(value, "branch_id")
+		branch_name, _ := jsonparser.GetString(value, "branch_name")
+
+		objbranch.Branch_id = branch_id
+		objbranch.Branch_name = branch_name
+		arraobjbranch = append(arraobjbranch, objbranch)
 	})
 	jsonparser.ArrayEach(Listdepartement_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		departement_id, _ := jsonparser.GetString(value, "departement_id")
@@ -131,6 +146,7 @@ func Purchaserequesthome(c *fiber.Ctx) error {
 			"status":          fiber.StatusOK,
 			"message":         "Success",
 			"record":          arraobj,
+			"listbranch":      Listbranch_RD,
 			"listdepartement": arraobjdepartement,
 			"listcurr":        arraobjcurr,
 			"perpage":         perpage_RD,
@@ -173,10 +189,10 @@ func PurchaserequestSave(c *fiber.Ctx) error {
 	temp_decp := helpers.Decryption(name)
 	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
 
-	// admin, idrecord, iddepartement, idemployee, idcurr, tipedoc, status, sData string
+	// admin, idrecord, idbranch, iddepartement, idemployee, idcurr, tipedoc, status, listdetail, sData string
 	result, err := models.Save_purchaserequest(
 		client_admin,
-		client.Purchaserequest_id, client.Purchaserequest_iddepartement, client.Purchaserequest_idemployee, client.Purchaserequest_idcurr,
+		client.Purchaserequest_id, client.Purchaserequest_idbranch, client.Purchaserequest_iddepartement, client.Purchaserequest_idemployee, client.Purchaserequest_idcurr,
 		client.Purchaserequest_tipedoc, client.Purchaserequest_status, client.Purchaserequest_listdetail, client.Sdata)
 	if err != nil {
 		c.Status(fiber.StatusBadRequest)

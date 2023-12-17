@@ -22,6 +22,7 @@ const (
 
 	PAGING_PAGE     int    = 50
 	STATUS_NEW      string = "background:#0dcaf0;font-weight:bold;color:black;"
+	STATUS_NEW2     string = "background:#e0daf3;font-weight:bold;color:black;"
 	STATUS_RUNNING  string = "background:#FFEB3B;font-weight:bold;color:black;"
 	STATUS_COMPLETE string = "background:#97f2d6;font-weight:bold;color:#165b55;"
 	STATUS_CANCEL   string = "background:#fe9ec1;font-weight:bold;color:#674264;"
