@@ -16,8 +16,97 @@ import (
 	"github.com/nleeper/goment"
 )
 
+const database_catevendor_local = configs.DB_tbl_mst_catevendor
 const database_vendor_local = configs.DB_tbl_mst_vendor
 
+func Fetch_catevendorHome(search string, page int) (helpers.Responsepaging, error) {
+	var obj entities.Model_catevendor
+	var arraobj []entities.Model_catevendor
+	var res helpers.Responsepaging
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	perpage := configs.PAGING_PAGE
+	totalrecord := 0
+	offset := page
+	sql_selectcount := ""
+	sql_selectcount += ""
+	sql_selectcount += "SELECT "
+	sql_selectcount += "COUNT(idcatevendor) as totalcatevendor  "
+	sql_selectcount += "FROM " + database_catevendor_local + "  "
+	if search != "" {
+		sql_selectcount += "WHERE LOWER(nmcatevendor) LIKE '%" + strings.ToLower(search) + "%' "
+	}
+	row_selectcount := con.QueryRowContext(ctx, sql_selectcount)
+	switch e_selectcount := row_selectcount.Scan(&totalrecord); e_selectcount {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e_selectcount)
+	}
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "idcatevendor , nmcatevendor, statusvendor, "
+	sql_select += "createcatevendor, to_char(COALESCE(createdatecatevendor,now()), 'YYYY-MM-DD HH24:MI:SS'), "
+	sql_select += "updatecatevendor, to_char(COALESCE(updatedatecatevendor,now()), 'YYYY-MM-DD HH24:MI:SS')  "
+	sql_select += "FROM " + database_catevendor_local + "   "
+	if search == "" {
+		sql_select += "ORDER BY createdatecatevendor DESC  OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
+
+	} else {
+		sql_selectcount += "WHERE LOWER(nmcatevendor) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_select += "ORDER BY createdatecatevendor DESC   LIMIT " + strconv.Itoa(perpage)
+	}
+
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		var (
+			idcatevendor_db                                                                            int
+			nmcatevendor_db, statusvendor_db                                                           string
+			createcatevendor_db, createdatecatevendor_db, updatecatevendor_db, updatedatecatevendor_db string
+		)
+
+		err = row.Scan(&idcatevendor_db, &nmcatevendor_db, &statusvendor_db,
+			&createcatevendor_db, &createdatecatevendor_db, &updatecatevendor_db, &updatedatecatevendor_db)
+
+		helpers.ErrorCheck(err)
+		create := ""
+		update := ""
+		status_css := configs.STATUS_CANCEL
+		if createcatevendor_db != "" {
+			create = createcatevendor_db + ", " + createdatecatevendor_db
+		}
+		if updatecatevendor_db != "" {
+			update = updatecatevendor_db + ", " + updatedatecatevendor_db
+		}
+		if statusvendor_db == "Y" {
+			status_css = configs.STATUS_COMPLETE
+		}
+
+		obj.Catevendor_id = idcatevendor_db
+		obj.Catevendor_name = nmcatevendor_db
+		obj.Catevendor_status = statusvendor_db
+		obj.Catevendor_status_css = status_css
+		obj.Catevendor_create = create
+		obj.Catevendor_update = update
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+	}
+	defer row.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = arraobj
+	res.Perpage = perpage
+	res.Totalrecord = totalrecord
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
 func Fetch_vendorHome(search string, page int) (helpers.Responsepaging, error) {
 	var obj entities.Model_vendor
 	var arraobj []entities.Model_vendor
@@ -112,6 +201,62 @@ func Fetch_vendorHome(search string, page int) (helpers.Responsepaging, error) {
 	res.Perpage = perpage
 	res.Totalrecord = totalrecord
 	res.Time = time.Since(start).String()
+
+	return res, nil
+}
+func Save_catevendor(admin, name, status, sData string, idrecord int) (helpers.Response, error) {
+	var res helpers.Response
+	msg := "Failed"
+	tglnow, _ := goment.New()
+	render_page := time.Now()
+
+	if sData == "New" {
+		sql_insert := `
+				insert into
+				` + database_catevendor_local + ` (
+					idcatevendor , nmcatevendor, statusvendor, 
+					createcatevendor, createdatecatevendor 
+				) values (
+					$1, $2, $3,    
+					$4, $5 
+				)
+			`
+		field_column := database_catevendor_local + tglnow.Format("YYYY")
+		idrecord_counter := Get_counter(field_column)
+		idrecord := tglnow.Format("YY") + strconv.Itoa(idrecord_counter)
+		flag_insert, msg_insert := Exec_SQL(sql_insert, database_vendor_local, "INSERT",
+			idrecord, name, status,
+			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
+
+		if flag_insert {
+			msg = "Succes"
+		} else {
+			fmt.Println(msg_insert)
+		}
+	} else {
+		sql_update := `
+				UPDATE 
+				` + database_catevendor_local + `  
+				SET nmcatevendor=$1, statusvendor=$2, 
+				updatecatevendor=$3, updatedatecatevendor=$4        
+				WHERE idcatevendor=$5     
+			`
+
+		flag_update, msg_update := Exec_SQL(sql_update, database_catevendor_local, "UPDATE",
+			name, status,
+			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
+
+		if flag_update {
+			msg = "Succes"
+		} else {
+			fmt.Println(msg_update)
+		}
+	}
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = nil
+	res.Time = time.Since(render_page).String()
 
 	return res, nil
 }

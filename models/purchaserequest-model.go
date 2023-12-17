@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/buger/jsonparser"
 	"github.com/gofiber/fiber/v2"
 	"github.com/nikitamirzani323/BTANGKAS_SUPER_API/configs"
 	"github.com/nikitamirzani323/BTANGKAS_SUPER_API/db"
@@ -17,6 +18,7 @@ import (
 )
 
 const database_purchaserequest_local = configs.DB_tbl_trx_purchaserequest
+const database_purchaserequestdetail_local = configs.DB_tbl_trx_purchaserequest_detail
 
 func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchaserequest, error) {
 	var obj entities.Model_purchaserequest
@@ -175,7 +177,7 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 
 	return res, nil
 }
-func Save_purchaserequest(admin, idrecord, iddepartement, idemployee, idcurr, tipedoc, status, sData string) (helpers.Response, error) {
+func Save_purchaserequest(admin, idrecord, iddepartement, idemployee, idcurr, tipedoc, status, listdetail, sData string) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
 	tglnow, _ := goment.New()
@@ -205,6 +207,21 @@ func Save_purchaserequest(admin, idrecord, iddepartement, idemployee, idcurr, ti
 
 		if flag_insert {
 			msg = "Succes"
+
+			json := []byte(listdetail)
+			jsonparser.ArrayEach(json, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+				detail_iditem, _ := jsonparser.GetString(value, "detail_iditem")
+				detail_nmitem, _ := jsonparser.GetString(value, "detail_nmitem")
+				detail_descpitem, _ := jsonparser.GetString(value, "detail_descpitem")
+				detail_purpose, _ := jsonparser.GetString(value, "detail_purpose")
+				detail_iduom, _ := jsonparser.GetString(value, "detail_iduom")
+				detail_qty, _ := jsonparser.GetFloat(value, "detail_qty")
+				detail_estimateprice, _ := jsonparser.GetFloat(value, "detail_estimateprice")
+
+				Save_purchaserequestdetail(admin, "", idrecord,
+					detail_iditem, detail_nmitem, detail_descpitem, detail_purpose, detail_iduom,
+					"PROCESS", "New", detail_qty, detail_estimateprice)
+			})
 		} else {
 			fmt.Println(msg_insert)
 		}
@@ -219,6 +236,70 @@ func Save_purchaserequest(admin, idrecord, iddepartement, idemployee, idcurr, ti
 
 		flag_update, msg_update := Exec_SQL(sql_update, database_purchaserequest_local, "UPDATE",
 			status,
+			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
+
+		if flag_update {
+			msg = "Succes"
+		} else {
+			fmt.Println(msg_update)
+		}
+	}
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = nil
+	res.Time = time.Since(render_page).String()
+
+	return res, nil
+}
+func Save_purchaserequestdetail(admin, idrecord, idpurchaserequest, iditem, nmitem, descpitem, purpose, iduom, status, sData string, qty, estimateprice float64) (helpers.Response, error) {
+	var res helpers.Response
+	msg := "Failed"
+	tglnow, _ := goment.New()
+	render_page := time.Now()
+
+	if sData == "New" {
+		sql_insert := `
+				insert into
+				` + database_purchaserequestdetail_local + ` (
+					idpurchaserequestdetail, idpurchaserequest ,  
+					iditem , nmitem, descitem,  purpose,
+					qty , iduom, estimateprice,  statupurchaserequestdetail,
+					createpurchaserequestdetail, createdatepurchaserequestdetail 
+				) values (
+					$1, $2, 
+					$3, $4, $5, $6, 
+					$7, $8, $9, $10,    
+					$11, $12 
+				)
+			`
+		field_column := database_purchaserequestdetail_local + tglnow.Format("YYYY")
+		idrecord_counter := Get_counter(field_column)
+		idrecord := "PRDETAIL_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
+		flag_insert, msg_insert := Exec_SQL(sql_insert, database_purchaserequestdetail_local, "INSERT",
+			idrecord, idpurchaserequest,
+			iditem, nmitem, descpitem, purpose,
+			qty, iduom, estimateprice, status,
+			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
+
+		if flag_insert {
+			msg = "Succes"
+		} else {
+			fmt.Println(msg_insert)
+		}
+	} else {
+		sql_update := `
+				UPDATE 
+				` + database_purchaserequestdetail_local + `  
+				SET iditem=$1, nmitem=$2, descitem=$3,  purpose=$4,
+				qty=$5 , iduom=$6, estimateprice=$7,  statupurchaserequestdetail=$8,
+				updatepurchaserequest=$9, updatedatepurchaserequest=$10          
+				WHERE idpurchaserequest=$11       
+			`
+
+		flag_update, msg_update := Exec_SQL(sql_update, database_purchaserequestdetail_local, "UPDATE",
+			iditem, nmitem, descpitem, purpose,
+			qty, iduom, estimateprice, status,
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
 
 		if flag_update {

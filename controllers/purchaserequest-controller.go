@@ -177,7 +177,7 @@ func PurchaserequestSave(c *fiber.Ctx) error {
 	result, err := models.Save_purchaserequest(
 		client_admin,
 		client.Purchaserequest_id, client.Purchaserequest_iddepartement, client.Purchaserequest_idemployee, client.Purchaserequest_idcurr,
-		client.Purchaserequest_tipedoc, client.Purchaserequest_status, client.Sdata)
+		client.Purchaserequest_tipedoc, client.Purchaserequest_status, client.Purchaserequest_listdetail, client.Sdata)
 	if err != nil {
 		c.Status(fiber.StatusBadRequest)
 		return c.JSON(fiber.Map{

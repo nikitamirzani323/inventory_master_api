@@ -28,6 +28,7 @@ type Controller_purchaserequestsave struct {
 	Purchaserequest_idemployee    string `json:"purchaserequest_idemployee" validate:"required"`
 	Purchaserequest_idcurr        string `json:"purchaserequest_idcurr" validate:"required"`
 	Purchaserequest_tipedoc       string `json:"purchaserequest_tipedoc" validate:"required"`
+	Purchaserequest_listdetail    string `json:"purchaserequest_istdetail" validate:"required"`
 	Purchaserequest_status        string `json:"purchaserequest_status" validate:"required"`
 }
 type Controller_purchaserequest struct {
