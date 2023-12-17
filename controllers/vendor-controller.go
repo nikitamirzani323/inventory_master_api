@@ -137,12 +137,15 @@ func Vendorhome(c *fiber.Ctx) error {
 
 	var obj entities.Model_vendor
 	var arraobj []entities.Model_vendor
+	var objcatevendor entities.Model_catevendorshare
+	var arraobjcatevendor []entities.Model_catevendorshare
 	render_page := time.Now()
 	resultredis, flag := helpers.GetRedis(Fieldvendor_home_redis + "_" + strconv.Itoa(client.Vendor_page) + "_" + client.Vendor_search)
 	jsonredis := []byte(resultredis)
 	perpage_RD, _ := jsonparser.GetInt(jsonredis, "perpage")
 	totalrecord_RD, _ := jsonparser.GetInt(jsonredis, "totalrecord")
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
+	listcatevendor_RD, _, _, _ := jsonparser.Get(jsonredis, "listcatevendor")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		vendor_id, _ := jsonparser.GetString(value, "vendor_id")
 		vendor_name, _ := jsonparser.GetString(value, "vendor_name")
@@ -169,7 +172,14 @@ func Vendorhome(c *fiber.Ctx) error {
 		obj.Vendor_update = vendor_update
 		arraobj = append(arraobj, obj)
 	})
+	jsonparser.ArrayEach(listcatevendor_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		catevendor_id, _ := jsonparser.GetInt(value, "catevendor_id")
+		catevendor_name, _ := jsonparser.GetString(value, "catevendor_name")
 
+		objcatevendor.Catevendor_id = int(catevendor_id)
+		objcatevendor.Catevendor_name = catevendor_name
+		arraobjcatevendor = append(arraobjcatevendor, objcatevendor)
+	})
 	if !flag {
 		result, err := models.Fetch_vendorHome(client.Vendor_search, client.Vendor_page)
 		if err != nil {
@@ -186,12 +196,13 @@ func Vendorhome(c *fiber.Ctx) error {
 	} else {
 		fmt.Println("VENDOR CACHE")
 		return c.JSON(fiber.Map{
-			"status":      fiber.StatusOK,
-			"message":     "Success",
-			"record":      arraobj,
-			"perpage":     perpage_RD,
-			"totalrecord": totalrecord_RD,
-			"time":        time.Since(render_page).String(),
+			"status":         fiber.StatusOK,
+			"message":        "Success",
+			"record":         arraobj,
+			"listcatevendor": arraobjcatevendor,
+			"perpage":        perpage_RD,
+			"totalrecord":    totalrecord_RD,
+			"time":           time.Since(render_page).String(),
 		})
 	}
 }
@@ -280,12 +291,12 @@ func VendorSave(c *fiber.Ctx) error {
 	temp_decp := helpers.Decryption(name)
 	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
 
-	// admin, idrecord, name, pic, alamat, email, phone1, phone2, status, sData string
+	// admin, idrecord, name, pic, alamat, email, phone1, phone2, status, sData string, idcatevendor int
 	result, err := models.Save_vendor(
 		client_admin,
 		client.Vendor_id, client.Vendor_name, client.Vendor_pic,
 		client.Vendor_alamat, client.Vendor_email, client.Vendor_phone1, client.Vendor_phone2, client.Vendor_status,
-		client.Sdata)
+		client.Sdata, client.Vendor_idcatevendor)
 	if err != nil {
 		c.Status(fiber.StatusBadRequest)
 		return c.JSON(fiber.Map{

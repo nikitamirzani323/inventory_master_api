@@ -24,6 +24,15 @@ type Responsepurchaserequest struct {
 	Totalrecord     int         `json:"totalrecord"`
 	Time            string      `json:"time"`
 }
+type Responsevendor struct {
+	Status         int         `json:"status"`
+	Message        string      `json:"message"`
+	Record         interface{} `json:"record"`
+	Listcatevendor interface{} `json:"listcatevendor"`
+	Perpage        int         `json:"perpage"`
+	Totalrecord    int         `json:"totalrecord"`
+	Time           string      `json:"time"`
+}
 type Responseemployee struct {
 	Status          int         `json:"status"`
 	Message         string      `json:"message"`

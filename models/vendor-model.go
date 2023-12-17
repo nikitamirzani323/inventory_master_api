@@ -107,10 +107,12 @@ func Fetch_catevendorHome(search string, page int) (helpers.Responsepaging, erro
 
 	return res, nil
 }
-func Fetch_vendorHome(search string, page int) (helpers.Responsepaging, error) {
+func Fetch_vendorHome(search string, page int) (helpers.Responsevendor, error) {
 	var obj entities.Model_vendor
 	var arraobj []entities.Model_vendor
-	var res helpers.Responsepaging
+	var objcatevendor entities.Model_catevendorshare
+	var arraobjcatevendor []entities.Model_catevendorshare
+	var res helpers.Responsevendor
 	msg := "Data Not Found"
 	con := db.CreateCon()
 	ctx := context.Background()
@@ -138,30 +140,32 @@ func Fetch_vendorHome(search string, page int) (helpers.Responsepaging, error) {
 
 	sql_select := ""
 	sql_select += "SELECT "
-	sql_select += "idvendor , nmvendor, picvendor, "
-	sql_select += "alamatvendor, emailvendor, phone1vendor, phone2vendor, statusvendor,  "
-	sql_select += "createvendor, to_char(COALESCE(createdatevendor,now()), 'YYYY-MM-DD HH24:MI:SS'), "
-	sql_select += "updatevendor, to_char(COALESCE(updatedatevendor,now()), 'YYYY-MM-DD HH24:MI:SS')  "
-	sql_select += "FROM " + database_vendor_local + "   "
+	sql_select += "A.idvendor ,A.idcatevendor,B.nmcatevendor ,A.nmvendor, A.picvendor, "
+	sql_select += "A.alamatvendor, A.emailvendor, A.phone1vendor, A.phone2vendor, A.statusvendor,  "
+	sql_select += "A.createvendor, to_char(COALESCE(A.createdatevendor,now()), 'YYYY-MM-DD HH24:MI:SS'), "
+	sql_select += "A.updatevendor, to_char(COALESCE(A.updatedatevendor,now()), 'YYYY-MM-DD HH24:MI:SS')  "
+	sql_select += "FROM " + database_vendor_local + " as A   "
+	sql_select += "JOIN " + database_catevendor_local + " as B ON B.idcatevendor = A.idcatevendor   "
 	if search == "" {
-		sql_select += "ORDER BY createdatevendor DESC  OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
+		sql_select += "ORDER BY A.createdatevendor DESC  OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
 
 	} else {
-		sql_selectcount += "WHERE LOWER(idvendor) LIKE '%" + strings.ToLower(search) + "%' "
-		sql_selectcount += "OR LOWER(nmvendor) LIKE '%" + strings.ToLower(search) + "%' "
-		sql_select += "ORDER BY createdatevendor DESC   LIMIT " + strconv.Itoa(perpage)
+		sql_selectcount += "WHERE LOWER(A.idvendor) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_selectcount += "OR LOWER(A.nmvendor) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_select += "ORDER BY A.createdatevendor DESC   LIMIT " + strconv.Itoa(perpage)
 	}
 
 	row, err := con.QueryContext(ctx, sql_select)
 	helpers.ErrorCheck(err)
 	for row.Next() {
 		var (
-			idvendor_db, nmvendor_db, picvendor_db                                             string
+			idcatevendor_db                                                                    int
+			idvendor_db, nmcatevendor_db, nmvendor_db, picvendor_db                            string
 			alamatvendor_db, emailvendor_db, phone1vendor_db, phone2vendor_db, statusvendor_db string
 			createvendor_db, createdatevendor_db, updatevendor_db, updatedatevendor_db         string
 		)
 
-		err = row.Scan(&idvendor_db, &nmvendor_db, &picvendor_db, &alamatvendor_db,
+		err = row.Scan(&idvendor_db, &idcatevendor_db, &nmcatevendor_db, &nmvendor_db, &picvendor_db, &alamatvendor_db,
 			&emailvendor_db, &phone1vendor_db, &phone2vendor_db, &statusvendor_db,
 			&createvendor_db, &createdatevendor_db, &updatevendor_db, &updatedatevendor_db)
 
@@ -180,6 +184,8 @@ func Fetch_vendorHome(search string, page int) (helpers.Responsepaging, error) {
 		}
 
 		obj.Vendor_id = idvendor_db
+		obj.Vendor_idcatevendor = idcatevendor_db
+		obj.Vendor_nmcatevendor = nmcatevendor_db
 		obj.Vendor_name = nmvendor_db
 		obj.Vendor_pic = picvendor_db
 		obj.Vendor_alamat = alamatvendor_db
@@ -195,9 +201,35 @@ func Fetch_vendorHome(search string, page int) (helpers.Responsepaging, error) {
 	}
 	defer row.Close()
 
+	sql_selectcatevendor := `SELECT 
+			idcatevendor, nmcatevendor  
+			FROM ` + database_catevendor_local + ` 
+			WHERE statusvendor = 'Y' 
+			ORDER BY nmcatevendor ASC    
+	`
+	rowcatevendor, errcatevendor := con.QueryContext(ctx, sql_selectcatevendor)
+	helpers.ErrorCheck(errcatevendor)
+	for rowcatevendor.Next() {
+		var (
+			idcatevendor_db int
+			nmcatevendor_db string
+		)
+
+		errcatevendor = rowcatevendor.Scan(&idcatevendor_db, &nmcatevendor_db)
+
+		helpers.ErrorCheck(errcatevendor)
+
+		objcatevendor.Catevendor_id = idcatevendor_db
+		objcatevendor.Catevendor_name = nmcatevendor_db
+		arraobjcatevendor = append(arraobjcatevendor, objcatevendor)
+		msg = "Success"
+	}
+	defer rowcatevendor.Close()
+
 	res.Status = fiber.StatusOK
 	res.Message = msg
 	res.Record = arraobj
+	res.Listcatevendor = arraobjcatevendor
 	res.Perpage = perpage
 	res.Totalrecord = totalrecord
 	res.Time = time.Since(start).String()
@@ -260,7 +292,7 @@ func Save_catevendor(admin, name, status, sData string, idrecord int) (helpers.R
 
 	return res, nil
 }
-func Save_vendor(admin, idrecord, name, pic, alamat, email, phone1, phone2, status, sData string) (helpers.Response, error) {
+func Save_vendor(admin, idrecord, name, pic, alamat, email, phone1, phone2, status, sData string, idcatevendor int) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
 	tglnow, _ := goment.New()
@@ -270,20 +302,20 @@ func Save_vendor(admin, idrecord, name, pic, alamat, email, phone1, phone2, stat
 		sql_insert := `
 				insert into
 				` + database_vendor_local + ` (
-					idvendor , nmvendor, picvendor, 
+					idvendor , idcatevendor, nmvendor, picvendor, 
 					alamatvendor,emailvendor, phone1vendor, phone2vendor, statusvendor,
 					createvendor, createdatevendor 
 				) values (
-					$1, $2, $3,    
-					$4, $5, $6, $7, $8,  
-					$9, $10 
+					$1, $2, $3, $4,     
+					$5, $6, $7, $8, $9,  
+					$10, $11  
 				)
 			`
 		field_column := database_vendor_local + tglnow.Format("YYYY")
 		idrecord_counter := Get_counter(field_column)
 		idrecord := "VENDOR_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
 		flag_insert, msg_insert := Exec_SQL(sql_insert, database_vendor_local, "INSERT",
-			idrecord, name, pic,
+			idrecord, idcatevendor, name, pic,
 			alamat, email, phone1, phone2, status,
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
@@ -296,14 +328,14 @@ func Save_vendor(admin, idrecord, name, pic, alamat, email, phone1, phone2, stat
 		sql_update := `
 				UPDATE 
 				` + database_vendor_local + `  
-				SET nmvendor=$1, picvendor=$2, alamatvendor=$3,  
-				emailvendor=$4, phone1vendor=$5, phone2vendor=$6 ,statusvendor=$7, 
-				updatevendor=$8, updatedatevendor=$9       
-				WHERE idvendor=$10     
+				SET idcatevendor=$1, nmvendor=$2, picvendor=$3, alamatvendor=$4,  
+				emailvendor=$5, phone1vendor=$6, phone2vendor=$7 ,statusvendor=$8, 
+				updatevendor=$9, updatedatevendor=$10         
+				WHERE idvendor=$11     
 			`
 
 		flag_update, msg_update := Exec_SQL(sql_update, database_vendor_local, "UPDATE",
-			name, pic, alamat, email, phone1, phone2, status,
+			idcatevendor, name, pic, alamat, email, phone1, phone2, status,
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
 
 		if flag_update {
