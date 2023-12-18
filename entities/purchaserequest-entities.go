@@ -21,6 +21,22 @@ type Model_purchaserequest struct {
 	Purchaserequest_create        string  `json:"purchaserequest_create"`
 	Purchaserequest_update        string  `json:"purchaserequest_update"`
 }
+type Model_purchaserequestdetail struct {
+	Purchaserequestdetail_id                string  `json:"purchaserequestdetail_id"`
+	Purchaserequestdetail_idpurchaserequest string  `json:"purchaserequestdetail_idpurchaserequest"`
+	Purchaserequestdetail_iditem            string  `json:"purchaserequestdetail_iditem"`
+	Purchaserequestdetail_idemployee        string  `json:"purchaserequestdetail_idemployee"`
+	Purchaserequestdetail_nmitem            string  `json:"purchaserequestdetail_nmitem"`
+	Purchaserequestdetail_descitem          string  `json:"purchaserequestdetail_descitem"`
+	Purchaserequestdetail_purpose           string  `json:"purchaserequestdetail_purpose"`
+	Purchaserequestdetail_qty               float32 `json:"purchaserequestdetail_qty"`
+	Purchaserequestdetail_iduom             string  `json:"purchaserequestdetail_iduom"`
+	Purchaserequestdetail_price             float32 `json:"purchaserequestdetail_price"`
+	Purchaserequestdetail_status            string  `json:"purchaserequestdetail_status"`
+	Purchaserequestdetail_status_css        string  `json:"purchaserequestdetail_status_css"`
+	Purchaserequestdetail_create            string  `json:"purchaserequestdetail_create"`
+	Purchaserequestdetail_update            string  `json:"purchaserequestdetail_update"`
+}
 
 type Controller_purchaserequestsave struct {
 	Page                          string  `json:"page" validate:"required"`

@@ -215,6 +215,83 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 
 	return res, nil
 }
+func Fetch_purchaserequestDetail(idpurchaserequest string) (helpers.Response, error) {
+	var obj entities.Model_purchaserequestdetail
+	var arraobj []entities.Model_purchaserequestdetail
+	var res helpers.Response
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "idpurchaserequestdetail, idpurchaserequest, iditem, nmitem, descitem,purpose, "
+	sql_select += "qty, iduom, estimateprice, statupurchaserequestdetail,  "
+	sql_select += "createpurchaserequestdetail, to_char(COALESCE(createdatepurchaserequestdetail,now()), 'YYYY-MM-DD HH24:MI:SS'), "
+	sql_select += "updatepurchaserequestdetail, to_char(COALESCE(updatedatepurchaserequestdetail,now()), 'YYYY-MM-DD HH24:MI:SS')  "
+	sql_select += "FROM " + database_purchaserequestdetail_local + " as A   "
+	sql_select += "WHERE idpurchaserequest='" + idpurchaserequest + "' "
+	sql_select += "ORDER BY createdatepurchaserequestdetail ASC   "
+
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		var (
+			idpurchaserequestdetail_db, iditem_db, nmitem_db, descitem_db, purpose_db, iduom_db, statupurchaserequestdetail_db                     string
+			qty_db, estimateprice_db                                                                                                               float64
+			createpurchaserequestdetail_db, createdatepurchaserequestdetail_db, updatepurchaserequestdetail_db, updatedatepurchaserequestdetail_db string
+		)
+
+		err = row.Scan(&idpurchaserequestdetail_db, &iditem_db, &nmitem_db, &descitem_db, &purpose_db,
+			&qty_db, &iduom_db, &estimateprice_db, &statupurchaserequestdetail_db,
+			&createpurchaserequestdetail_db, &createdatepurchaserequestdetail_db, &updatepurchaserequestdetail_db, &updatedatepurchaserequestdetail_db)
+
+		helpers.ErrorCheck(err)
+		create := ""
+		update := ""
+		status_css := configs.STATUS_CANCEL
+		if createpurchaserequestdetail_db != "" {
+			create = createpurchaserequestdetail_db + ", " + createdatepurchaserequestdetail_db
+		}
+		if updatepurchaserequestdetail_db != "" {
+			update = updatepurchaserequestdetail_db + ", " + updatedatepurchaserequestdetail_db
+		}
+		switch statupurchaserequestdetail_db {
+		case "OPEN":
+			status_css = configs.STATUS_NEW2
+		case "PROCESS":
+			status_css = configs.STATUS_RUNNING
+		case "COMPLETE":
+			status_css = configs.STATUS_COMPLETE
+		case "CANCEL":
+			status_css = configs.STATUS_CANCEL
+		}
+
+		obj.Purchaserequestdetail_id = idpurchaserequestdetail_db
+		obj.Purchaserequestdetail_iditem = iditem_db
+		obj.Purchaserequestdetail_nmitem = nmitem_db
+		obj.Purchaserequestdetail_descitem = descitem_db
+		obj.Purchaserequestdetail_purpose = purpose_db
+		obj.Purchaserequestdetail_iduom = iduom_db
+		obj.Purchaserequestdetail_qty = float32(qty_db)
+		obj.Purchaserequestdetail_price = float32(estimateprice_db)
+		obj.Purchaserequestdetail_status = statupurchaserequestdetail_db
+		obj.Purchaserequestdetail_status_css = status_css
+		obj.Purchaserequestdetail_create = create
+		obj.Purchaserequestdetail_update = update
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+	}
+	defer row.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = arraobj
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
 func Save_purchaserequest(admin, idrecord, idbranch, iddepartement, idemployee, idcurr, tipedoc, remark, listdetail, sData string, total_item, subtotalpr float32) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
