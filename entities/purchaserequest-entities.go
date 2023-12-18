@@ -25,7 +25,6 @@ type Model_purchaserequestdetail struct {
 	Purchaserequestdetail_id                string  `json:"purchaserequestdetail_id"`
 	Purchaserequestdetail_idpurchaserequest string  `json:"purchaserequestdetail_idpurchaserequest"`
 	Purchaserequestdetail_iditem            string  `json:"purchaserequestdetail_iditem"`
-	Purchaserequestdetail_idemployee        string  `json:"purchaserequestdetail_idemployee"`
 	Purchaserequestdetail_nmitem            string  `json:"purchaserequestdetail_nmitem"`
 	Purchaserequestdetail_descitem          string  `json:"purchaserequestdetail_descitem"`
 	Purchaserequestdetail_purpose           string  `json:"purchaserequestdetail_purpose"`

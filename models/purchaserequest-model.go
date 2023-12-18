@@ -226,7 +226,7 @@ func Fetch_purchaserequestDetail(idpurchaserequest string) (helpers.Response, er
 
 	sql_select := ""
 	sql_select += "SELECT "
-	sql_select += "idpurchaserequestdetail, idpurchaserequest, iditem, nmitem, descitem,purpose, "
+	sql_select += "idpurchaserequestdetail, iditem, nmitem, descitem,purpose, "
 	sql_select += "qty, iduom, estimateprice, statupurchaserequestdetail,  "
 	sql_select += "createpurchaserequestdetail, to_char(COALESCE(createdatepurchaserequestdetail,now()), 'YYYY-MM-DD HH24:MI:SS'), "
 	sql_select += "updatepurchaserequestdetail, to_char(COALESCE(updatedatepurchaserequestdetail,now()), 'YYYY-MM-DD HH24:MI:SS')  "

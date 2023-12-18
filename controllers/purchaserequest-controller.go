@@ -193,13 +193,11 @@ func Purchaserequestdetail(c *fiber.Ctx) error {
 	render_page := time.Now()
 	resultredis, flag := helpers.GetRedis(Fieldpurchaserequest_home_redis + "_" + client.Purchaserequest_id)
 	jsonredis := []byte(resultredis)
-	perpage_RD, _ := jsonparser.GetInt(jsonredis, "perpage")
-	totalrecord_RD, _ := jsonparser.GetInt(jsonredis, "totalrecord")
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		purchaserequestdetail_id, _ := jsonparser.GetString(value, "purchaserequestdetail_id")
 		purchaserequestdetail_idpurchaserequest, _ := jsonparser.GetString(value, "purchaserequestdetail_idpurchaserequest")
-		purchaserequestdetail_idemployee, _ := jsonparser.GetString(value, "purchaserequestdetail_iditem")
+		purchaserequestdetail_iditem, _ := jsonparser.GetString(value, "purchaserequestdetail_iditem")
 		purchaserequestdetail_nmitem, _ := jsonparser.GetString(value, "purchaserequestdetail_idemployee")
 		purchaserequestdetail_descitem, _ := jsonparser.GetString(value, "purchaserequestdetail_descitem")
 		purchaserequestdetail_purpose, _ := jsonparser.GetString(value, "purchaserequestdetail_purpose")
@@ -213,7 +211,7 @@ func Purchaserequestdetail(c *fiber.Ctx) error {
 
 		obj.Purchaserequestdetail_id = purchaserequestdetail_id
 		obj.Purchaserequestdetail_idpurchaserequest = purchaserequestdetail_idpurchaserequest
-		obj.Purchaserequestdetail_idemployee = purchaserequestdetail_idemployee
+		obj.Purchaserequestdetail_iditem = purchaserequestdetail_iditem
 		obj.Purchaserequestdetail_nmitem = purchaserequestdetail_nmitem
 		obj.Purchaserequestdetail_descitem = purchaserequestdetail_descitem
 		obj.Purchaserequestdetail_purpose = purchaserequestdetail_purpose
@@ -243,12 +241,10 @@ func Purchaserequestdetail(c *fiber.Ctx) error {
 	} else {
 		fmt.Println("PURCHASE REQUEST DETAIL CACHE")
 		return c.JSON(fiber.Map{
-			"status":      fiber.StatusOK,
-			"message":     "Success",
-			"record":      arraobj,
-			"perpage":     perpage_RD,
-			"totalrecord": totalrecord_RD,
-			"time":        time.Since(render_page).String(),
+			"status":  fiber.StatusOK,
+			"message": "Success",
+			"record":  arraobj,
+			"time":    time.Since(render_page).String(),
 		})
 	}
 }
