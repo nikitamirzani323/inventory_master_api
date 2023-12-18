@@ -230,7 +230,7 @@ func Fetch_purchaserequestDetail(idpurchaserequest string) (helpers.Response, er
 	sql_select += "qty, iduom, estimateprice, statupurchaserequestdetail,  "
 	sql_select += "createpurchaserequestdetail, to_char(COALESCE(createdatepurchaserequestdetail,now()), 'YYYY-MM-DD HH24:MI:SS'), "
 	sql_select += "updatepurchaserequestdetail, to_char(COALESCE(updatedatepurchaserequestdetail,now()), 'YYYY-MM-DD HH24:MI:SS')  "
-	sql_select += "FROM " + database_purchaserequestdetail_local + " as A   "
+	sql_select += "FROM " + database_purchaserequestdetail_local + "   "
 	sql_select += "WHERE idpurchaserequest='" + idpurchaserequest + "' "
 	sql_select += "ORDER BY createdatepurchaserequestdetail ASC   "
 

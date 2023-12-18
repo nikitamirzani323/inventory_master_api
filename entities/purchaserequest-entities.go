@@ -54,8 +54,26 @@ type Controller_purchaserequestsave struct {
 	Purchaserequest_subtotal      float32 `json:"purchaserequest_subtotal" validate:"required"`
 	Purchaserequest_remark        string  `json:"purchaserequest_remark"`
 }
+type Controller_purchaserequestdetailsave struct {
+	Page                                    string  `json:"page" validate:"required"`
+	Sdata                                   string  `json:"sdata" validate:"required"`
+	Purchaserequestdetail_search            string  `json:"purchaserequestdetail_search"`
+	Purchaserequestdetail_page              int     `json:"purchaserequestdetail_page"`
+	Purchaserequestdetail_id                string  `json:"purchaserequestdetail_id"`
+	Purchaserequestdetail_idpurchaserequest string  `json:"purchaserequestdetail_idpurchaserequest" validate:"required"`
+	Purchaserequestdetail_iditem            string  `json:"purchaserequestdetail_iditem" validate:"required"`
+	Purchaserequestdetail_nmitem            string  `json:"purchaserequestdetail_nmitem" validate:"required"`
+	Purchaserequestdetail_descitem          string  `json:"purchaserequestdetail_descitem" validate:"required"`
+	Purchaserequestdetail_purpose           string  `json:"purchaserequestdetail_purpose" validate:"required"`
+	Purchaserequestdetail_iduom             string  `json:"purchaserequestdetail_iduom" validate:"required"`
+	Purchaserequestdetail_qty               float32 `json:"purchaserequestdetail_qty" validate:"required"`
+	Purchaserequestdetail_estimateprice     float32 `json:"purchaserequestdetail_estimateprice" validate:"required"`
+}
 type Controller_purchaserequest struct {
 	Purchaserequest_search string `json:"purchaserequest_search"`
 	Purchaserequest_status string `json:"purchaserequest_status"`
 	Purchaserequest_page   int    `json:"purchaserequest_page"`
+}
+type Controller_purchaserequestdetail struct {
+	Purchaserequest_id string `json:"purchaserequest_id"`
 }
