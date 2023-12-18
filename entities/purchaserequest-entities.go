@@ -74,5 +74,9 @@ type Controller_purchaserequest struct {
 	Purchaserequest_page   int    `json:"purchaserequest_page"`
 }
 type Controller_purchaserequestdetail struct {
-	Purchaserequest_id string `json:"purchaserequest_id"`
+	Purchaserequest_id string `json:"purchaserequest_id" validate:"required"`
+}
+type Controller_purchaserequeststatus struct {
+	Purchaserequest_id     string `json:"purchaserequest_id" validate:"required"`
+	Purchaserequest_status string `json:"purchaserequest_status" validate:"required"`
 }

@@ -198,7 +198,7 @@ func Purchaserequestdetail(c *fiber.Ctx) error {
 		purchaserequestdetail_id, _ := jsonparser.GetString(value, "purchaserequestdetail_id")
 		purchaserequestdetail_idpurchaserequest, _ := jsonparser.GetString(value, "purchaserequestdetail_idpurchaserequest")
 		purchaserequestdetail_iditem, _ := jsonparser.GetString(value, "purchaserequestdetail_iditem")
-		purchaserequestdetail_nmitem, _ := jsonparser.GetString(value, "purchaserequestdetail_idemployee")
+		purchaserequestdetail_nmitem, _ := jsonparser.GetString(value, "purchaserequestdetail_nmitem")
 		purchaserequestdetail_descitem, _ := jsonparser.GetString(value, "purchaserequestdetail_descitem")
 		purchaserequestdetail_purpose, _ := jsonparser.GetString(value, "purchaserequestdetail_purpose")
 		purchaserequestdetail_qty, _ := jsonparser.GetFloat(value, "purchaserequestdetail_qty")
@@ -298,6 +298,56 @@ func PurchaserequestSave(c *fiber.Ctx) error {
 	}
 
 	_deleteredis_purchaserequest(client.Purchaserequest_search, "", client.Purchaserequest_page)
+	return c.JSON(result)
+}
+func PurchaserequeststatusSave(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_purchaserequeststatus)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+	user := c.Locals("jwt").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["name"].(string)
+	temp_decp := helpers.Decryption(name)
+	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
+
+	// aadmin, idrecord, status string
+	result, err := models.Save_purchaserequestStatus(
+		client_admin,
+		client.Purchaserequest_id, client.Purchaserequest_status)
+	if err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	_deleteredis_purchaserequest("", client.Purchaserequest_id, 0)
 	return c.JSON(result)
 }
 func _deleteredis_purchaserequest(search, idpurchase string, page int) {

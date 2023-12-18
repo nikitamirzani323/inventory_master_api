@@ -353,6 +353,62 @@ func Save_purchaserequest(admin, idrecord, idbranch, iddepartement, idemployee, 
 
 	return res, nil
 }
+func Save_purchaserequestStatus(admin, idrecord, status string) (helpers.Response, error) {
+	var res helpers.Response
+	msg := "Failed"
+	tglnow, _ := goment.New()
+	render_page := time.Now()
+	status_db := ""
+	total_detail_db := 0
+
+	status_db, total_detail_db = _Get_info_pr(idrecord)
+	if status_db == "OPEN" {
+		if total_detail_db > 0 {
+			sql_update := `
+				UPDATE 
+				` + database_purchaserequest_local + `  
+				SET statuspurchaserequest=$1, 
+				updatepurchaserequest=$2, updatedatepurchaserequest=$3     
+				WHERE idpurchaserequest=$4    
+			`
+
+			flag_update, msg_update := Exec_SQL(sql_update, database_purchaserequest_local, "UPDATE",
+				status,
+				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
+
+			if flag_update {
+				msg = "Succes"
+				//DETAIL
+				sql_updatedetail := `
+					UPDATE 
+					` + database_purchaserequestdetail_local + `  
+					SET statupurchaserequestdetail=$1, 
+					updatepurchaserequestdetail=$2, updatedatepurchaserequestdetail=$3     
+					WHERE idpurchaserequest=$4    
+				`
+
+				flag_updatedetail, msg_updatedetail := Exec_SQL(sql_updatedetail, database_purchaserequestdetail_local, "UPDATE",
+					status,
+					admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
+
+				if flag_updatedetail {
+					msg = "Succes"
+				} else {
+					fmt.Println(msg_updatedetail)
+				}
+			} else {
+				fmt.Println(msg_update)
+			}
+		}
+	}
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = nil
+	res.Time = time.Since(render_page).String()
+
+	return res, nil
+}
 func Save_purchaserequestdetail(admin, idrecord, idpurchaserequest, iditem, nmitem, descpitem, purpose, iduom, status, sData string, qty, estimateprice float64) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
@@ -416,4 +472,37 @@ func Save_purchaserequestdetail(admin, idrecord, idpurchaserequest, iditem, nmit
 	res.Time = time.Since(render_page).String()
 
 	return res, nil
+}
+func _Get_info_pr(idpurchaserequest string) (string, int) {
+	con := db.CreateCon()
+	ctx := context.Background()
+	status := ""
+	total_detail := 0
+	sql_select := `SELECT
+			statuspurchaserequest  
+			FROM ` + database_purchaserequest_local + `  
+			WHERE idpurchaserequest='` + idpurchaserequest + `'     
+		`
+	row := con.QueryRowContext(ctx, sql_select)
+	switch e := row.Scan(&status); e {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e)
+	}
+
+	sql_selectdetail := `SELECT
+			COUNT(idpurchaserequestdetail) AS total 
+			FROM ` + database_purchaserequestdetail_local + `  
+			WHERE idpurchaserequest='` + idpurchaserequest + `'     
+		`
+	rowdetail := con.QueryRowContext(ctx, sql_selectdetail)
+	switch e := rowdetail.Scan(&total_detail); e {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e)
+	}
+
+	return status, total_detail
 }
