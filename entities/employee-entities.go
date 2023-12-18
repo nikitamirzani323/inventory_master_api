@@ -37,6 +37,5 @@ type Controller_employee struct {
 	Employee_page   int    `json:"employee_page"`
 }
 type Controller_employeeshare struct {
-	Employee_search        string `json:"employee_search"`
 	Employee_iddepartement string `json:"employee_iddepartement"`
 }

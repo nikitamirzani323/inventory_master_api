@@ -80,6 +80,7 @@ func Init() *fiber.App {
 	app.Post("/api/cateitem", middleware.JWTProtected(), controllers.Cateitemhome)
 	app.Post("/api/cateitemsave", middleware.JWTProtected(), controllers.CateitemSave)
 	app.Post("/api/item", middleware.JWTProtected(), controllers.Itemhome)
+	app.Post("/api/itemshare", middleware.JWTProtected(), controllers.Itemshare)
 	app.Post("/api/itemuom", middleware.JWTProtected(), controllers.Itemuom)
 	app.Post("/api/itemsave", middleware.JWTProtected(), controllers.ItemSave)
 	app.Post("/api/itemuomsave", middleware.JWTProtected(), controllers.ItemuomSave)

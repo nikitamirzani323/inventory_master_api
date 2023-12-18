@@ -19,6 +19,7 @@ const (
 	DB_tbl_mst_item_uom               string = "tbl_mst_item_uom"
 	DB_tbl_trx_purchaserequest        string = "tbl_trx_purchaserequest"
 	DB_tbl_trx_purchaserequest_detail string = "tbl_trx_purchaserequest_detail"
+	DB_view_tbl_item_purchase         string = "view_tbl_item_purchase"
 
 	PAGING_PAGE     int    = 50
 	STATUS_NEW      string = "background:#0dcaf0;font-weight:bold;color:black;"

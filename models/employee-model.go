@@ -144,7 +144,7 @@ func Fetch_employeeHome(search string, page int) (helpers.Responseemployee, erro
 
 	return res, nil
 }
-func Fetch_employeeShare(search, iddepartement string) (helpers.Response, error) {
+func Fetch_employeeShare(iddepartement string) (helpers.Response, error) {
 	var obj entities.Model_employeeshare
 	var arraobj []entities.Model_employeeshare
 	var res helpers.Response
@@ -157,8 +157,7 @@ func Fetch_employeeShare(search, iddepartement string) (helpers.Response, error)
 	sql_select += "SELECT "
 	sql_select += "idemployee,nmemployee "
 	sql_select += "FROM " + database_employee_local + "    "
-	sql_select += "WHERE LOWER(nmemployee) LIKE '%" + strings.ToLower(search) + "%' "
-	sql_select += "AND iddepartement='" + iddepartement + "' "
+	sql_select += "WHERE iddepartement='" + iddepartement + "' "
 	sql_select += "AND statusemployee='Y' "
 	sql_select += "ORDER BY nmemployee ASC  LIMIT 100 "
 

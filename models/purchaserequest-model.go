@@ -56,8 +56,9 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 
 	sql_select := ""
 	sql_select += "SELECT "
-	sql_select += "A.idpurchaserequest, A.idbranch,B.nmbranch, A.iddepartement, C.nmdepartement, "
-	sql_select += "A.idemployee, D.nmemployee , A.idcurr, A.tipe_document, A.periode_document, A.statupurchaserequest,  "
+	sql_select += "A.idpurchaserequest, A.idbranch, B.nmbranch, A.iddepartement, C.nmdepartement, "
+	sql_select += "A.idemployee, D.nmemployee, A.idcurr, A.tipe_document, A.periode_document, A.statuspurchaserequest, A.remarkpurchaserequest,  "
+	sql_select += "A.total_item, A.total_pr , A.total_po,   "
 	sql_select += "A.createpurchaserequest, to_char(COALESCE(A.createdatepurchaserequest,now()), 'YYYY-MM-DD HH24:MI:SS'), "
 	sql_select += "A.updatepurchaserequest, to_char(COALESCE(A.updatedatepurchaserequest,now()), 'YYYY-MM-DD HH24:MI:SS')  "
 	sql_select += "FROM " + database_purchaserequest_local + " as A   "
@@ -76,13 +77,15 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 	helpers.ErrorCheck(err)
 	for row.Next() {
 		var (
-			idpurchaserequest_db, idbranch_db, nmbranch_db, iddepartement_db, nmdepartement_db                             string
-			idemployee_db, nmemployee_db, idcurr_db, tipe_document_db, periode_document_db, statupurchaserequest_db        string
-			createpurchaserequest_db, createdatepurchaserequest_db, updatepurchaserequest_db, updatedatepurchaserequest_db string
+			idpurchaserequest_db, idbranch_db, nmbranch_db, iddepartement_db, nmdepartement_db                                                 string
+			idemployee_db, nmemployee_db, idcurr_db, tipe_document_db, periode_document_db, statuspurchaserequest_db, remarkpurchaserequest_db string
+			total_item_db, total_pr_db, total_po_db                                                                                            float64
+			createpurchaserequest_db, createdatepurchaserequest_db, updatepurchaserequest_db, updatedatepurchaserequest_db                     string
 		)
 
 		err = row.Scan(&idpurchaserequest_db, &idbranch_db, &nmbranch_db, &iddepartement_db, &nmdepartement_db,
-			&idemployee_db, &nmemployee_db, &idcurr_db, &tipe_document_db, &periode_document_db, &statupurchaserequest_db,
+			&idemployee_db, &nmemployee_db, &idcurr_db, &tipe_document_db, &periode_document_db, &statuspurchaserequest_db, &remarkpurchaserequest_db,
+			&total_item_db, &total_pr_db, &total_po_db,
 			&createpurchaserequest_db, &createdatepurchaserequest_db, &updatepurchaserequest_db, &updatedatepurchaserequest_db)
 
 		helpers.ErrorCheck(err)
@@ -95,7 +98,7 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 		if updatepurchaserequest_db != "" {
 			update = updatepurchaserequest_db + ", " + updatedatepurchaserequest_db
 		}
-		switch statupurchaserequest_db {
+		switch statuspurchaserequest_db {
 		case "OPEN":
 			status_css = configs.STATUS_NEW2
 		case "PROCESS":
@@ -116,10 +119,11 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 		obj.Purchaserequest_nmemployee = nmemployee_db
 		obj.Purchaserequest_tipedoc = tipe_document_db
 		obj.Purchaserequest_periodedoc = periode_document_db
-		obj.Purchaserequest_totalitem = 0
-		obj.Purchaserequest_totalpr = 0
-		obj.Purchaserequest_totalpo = 0
-		obj.Purchaserequest_status = statupurchaserequest_db
+		obj.Purchaserequest_totalitem = total_item_db
+		obj.Purchaserequest_totalpr = total_pr_db
+		obj.Purchaserequest_totalpo = total_po_db
+		obj.Purchaserequest_remark = remarkpurchaserequest_db
+		obj.Purchaserequest_status = statuspurchaserequest_db
 		obj.Purchaserequest_status_css = status_css
 		obj.Purchaserequest_create = create
 		obj.Purchaserequest_update = update
@@ -210,7 +214,7 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 
 	return res, nil
 }
-func Save_purchaserequest(admin, idrecord, idbranch, iddepartement, idemployee, idcurr, tipedoc, status, listdetail, sData string) (helpers.Response, error) {
+func Save_purchaserequest(admin, idrecord, idbranch, iddepartement, idemployee, idcurr, tipedoc, remark, listdetail, sData string, total_item, subtotalpr float32) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
 	tglnow, _ := goment.New()
@@ -221,21 +225,24 @@ func Save_purchaserequest(admin, idrecord, idbranch, iddepartement, idemployee, 
 				insert into
 				` + database_purchaserequest_local + ` (
 					idpurchaserequest , idbranch, iddepartement, idemployee, idcurr,  
-					tipe_document , periode_document, statupurchaserequest,  
+					tipe_document , periode_document, statuspurchaserequest, remarkpurchaserequest, 
+					total_item , total_pr,  
 					createpurchaserequest, createdatepurchaserequest 
 				) values (
 					$1, $2, $3, $4, $5,      
-					$6, $7, $8, 
-					$9, $10   
+					$6, $7, $8, $9, 
+					$10, $11, 
+					$12, $13  
 				)
 			`
 		field_column := database_purchaserequest_local + tglnow.Format("YYYY")
 		idrecord_counter := Get_counter(field_column)
 		idrecord := "PR_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
-		periode_doc := tglnow.Format("MM") + tglnow.Format("DDDD")
+		periode_doc := tglnow.Format("YYYY") + "-" + tglnow.Format("MM")
 		flag_insert, msg_insert := Exec_SQL(sql_insert, database_purchaserequest_local, "INSERT",
 			idrecord, idbranch, iddepartement, idemployee, idcurr,
-			tipedoc, periode_doc, "OPEN",
+			tipedoc, periode_doc, "OPEN", remark,
+			total_item, subtotalpr,
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
 		if flag_insert {
@@ -249,32 +256,14 @@ func Save_purchaserequest(admin, idrecord, idbranch, iddepartement, idemployee, 
 				detail_purpose, _ := jsonparser.GetString(value, "detail_purpose")
 				detail_iduom, _ := jsonparser.GetString(value, "detail_iduom")
 				detail_qty, _ := jsonparser.GetFloat(value, "detail_qty")
-				detail_estimateprice, _ := jsonparser.GetFloat(value, "detail_estimateprice")
+				detail_price, _ := jsonparser.GetFloat(value, "detail_price")
 
 				Save_purchaserequestdetail(admin, "", idrecord,
 					detail_iditem, detail_nmitem, detail_descpitem, detail_purpose, detail_iduom,
-					"PROCESS", "New", detail_qty, detail_estimateprice)
+					"OPEN", "New", detail_qty, detail_price)
 			})
 		} else {
 			fmt.Println(msg_insert)
-		}
-	} else {
-		sql_update := `
-				UPDATE 
-				` + database_purchaserequest_local + `  
-				SET statupurchaserequest=$1, 
-				updatepurchaserequest=$2, updatedatepurchaserequest=$3         
-				WHERE idpurchaserequest=$4       
-			`
-
-		flag_update, msg_update := Exec_SQL(sql_update, database_purchaserequest_local, "UPDATE",
-			status,
-			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
-
-		if flag_update {
-			msg = "Succes"
-		} else {
-			fmt.Println(msg_update)
 		}
 	}
 

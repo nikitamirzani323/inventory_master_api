@@ -250,6 +250,83 @@ func Fetch_itemHome(search string, page int) (helpers.Responseitem, error) {
 
 	return res, nil
 }
+func Fetch_itemShare(search string) (helpers.Response, error) {
+	var obj entities.Model_itemshare
+	var arraobj []entities.Model_itemshare
+
+	var res helpers.Response
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "iditem , nmcateitem, nmitem,  "
+	sql_select += "descpitem , urlimgitem  "
+	sql_select += "FROM " + configs.DB_view_tbl_item_purchase + "  as A  "
+	if search != "" {
+		sql_select += "WHERE LOWER(nmcateitem) LIKE '%" + strings.ToLower(search) + "%' "
+	}
+	sql_select += "ORDER BY nmitem ASC   LIMIT " + strconv.Itoa(configs.PAGING_PAGE)
+
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		var (
+			iditem_db, nmcateitem_db, nmitem_db, descpitem_db, urlimgitem_db string
+		)
+
+		err = row.Scan(&iditem_db, &nmcateitem_db, &nmitem_db, &descpitem_db, &urlimgitem_db)
+
+		helpers.ErrorCheck(err)
+
+		var objitemuom entities.Model_itemuomshare
+		var arraobjitemuom []entities.Model_itemuomshare
+		sql_itemuom := `SELECT 
+				iduom  
+				FROM ` + configs.DB_tbl_mst_item_uom + ` 
+				WHERE iditem=$1 AND default_itemuom!='Y' 
+				ORDER BY iduom ASC    
+		`
+		rowitemuom, erritemuom := con.QueryContext(ctx, sql_itemuom, iditem_db)
+		helpers.ErrorCheck(erritemuom)
+		for rowitemuom.Next() {
+			var (
+				iduom_db string
+			)
+
+			erritemuom = rowitemuom.Scan(&iduom_db)
+
+			helpers.ErrorCheck(erritemuom)
+
+			objitemuom.Itemuom_iduom = iduom_db
+			arraobjitemuom = append(arraobjitemuom, objitemuom)
+			msg = "Success"
+		}
+		defer rowitemuom.Close()
+
+		if len(arraobjitemuom) > 0 {
+			obj.Itemshare_id = iditem_db
+			obj.Itemshare_nmcateitem = nmcateitem_db
+			obj.Itemshare_name = nmitem_db
+			obj.Itemshare_descp = descpitem_db
+			obj.Itemshare_urlimg = urlimgitem_db
+			obj.Itemshare_uom = arraobjitemuom
+			arraobj = append(arraobj, obj)
+		}
+
+		msg = "Success"
+	}
+	defer row.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = arraobj
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
 func Fetch_itemuom(iditem string) (helpers.Response, error) {
 	var obj entities.Model_itemuom
 	var arraobj []entities.Model_itemuom

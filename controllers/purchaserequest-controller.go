@@ -81,14 +81,15 @@ func Purchaserequesthome(c *fiber.Ctx) error {
 		purchaserequest_totalitem, _ := jsonparser.GetFloat(value, "purchaserequest_totalitem")
 		purchaserequest_totalpr, _ := jsonparser.GetFloat(value, "purchaserequest_totalpr")
 		purchaserequest_totalpo, _ := jsonparser.GetFloat(value, "purchaserequest_totalpo")
+		purchaserequest_remark, _ := jsonparser.GetString(value, "purchaserequest_remark")
 		purchaserequest_status, _ := jsonparser.GetString(value, "purchaserequest_status")
 		purchaserequest_status_css, _ := jsonparser.GetString(value, "purchaserequest_status_css")
 		purchaserequest_create, _ := jsonparser.GetString(value, "purchaserequest_create")
 		purchaserequest_update, _ := jsonparser.GetString(value, "purchaserequest_update")
 
 		obj.Purchaserequest_id = purchaserequest_id
-		obj.Purchaserequest_idbranch = purchaserequest_iddepartement
-		obj.Purchaserequest_iddepartement = purchaserequest_idbranch
+		obj.Purchaserequest_idbranch = purchaserequest_idbranch
+		obj.Purchaserequest_iddepartement = purchaserequest_iddepartement
 		obj.Purchaserequest_idemployee = purchaserequest_idemployee
 		obj.Purchaserequest_idcurr = purchaserequest_idcurr
 		obj.Purchaserequest_tipedoc = purchaserequest_tipedoc
@@ -99,6 +100,7 @@ func Purchaserequesthome(c *fiber.Ctx) error {
 		obj.Purchaserequest_totalitem = float64(purchaserequest_totalitem)
 		obj.Purchaserequest_totalpr = float64(purchaserequest_totalpr)
 		obj.Purchaserequest_totalpo = float64(purchaserequest_totalpo)
+		obj.Purchaserequest_remark = purchaserequest_remark
 		obj.Purchaserequest_status = purchaserequest_status
 		obj.Purchaserequest_status_css = purchaserequest_status_css
 		obj.Purchaserequest_create = purchaserequest_create
@@ -189,11 +191,12 @@ func PurchaserequestSave(c *fiber.Ctx) error {
 	temp_decp := helpers.Decryption(name)
 	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
 
-	// admin, idrecord, idbranch, iddepartement, idemployee, idcurr, tipedoc, status, listdetail, sData string
+	// admin, idrecord, idbranch, iddepartement, idemployee, idcurr, tipedoc, remark, listdetail, sData string, total_item, subtotalpr float32
 	result, err := models.Save_purchaserequest(
 		client_admin,
 		client.Purchaserequest_id, client.Purchaserequest_idbranch, client.Purchaserequest_iddepartement, client.Purchaserequest_idemployee, client.Purchaserequest_idcurr,
-		client.Purchaserequest_tipedoc, client.Purchaserequest_status, client.Purchaserequest_listdetail, client.Sdata)
+		client.Purchaserequest_tipedoc, client.Purchaserequest_remark, client.Purchaserequest_listdetail, client.Sdata,
+		client.Purchaserequest_totalitem, client.Purchaserequest_subtotal)
 	if err != nil {
 		c.Status(fiber.StatusBadRequest)
 		return c.JSON(fiber.Map{

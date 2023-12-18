@@ -31,6 +31,14 @@ type Model_item struct {
 	Item_create        string `json:"item_create"`
 	Item_update        string `json:"item_update"`
 }
+type Model_itemshare struct {
+	Itemshare_id         string      `json:"itemshare_id"`
+	Itemshare_nmcateitem string      `json:"itemshare_nmcateitem"`
+	Itemshare_name       string      `json:"itemshare_name"`
+	Itemshare_descp      string      `json:"itemshare_descp"`
+	Itemshare_urlimg     string      `json:"itemshare_urlimg"`
+	Itemshare_uom        interface{} `json:"itemshare_uom"`
+}
 type Model_itemuom struct {
 	Itemuom_id          int     `json:"itemuom_id"`
 	Itemuom_iduom       string  `json:"itemuom_iduom"`
@@ -40,6 +48,9 @@ type Model_itemuom struct {
 	Itemuom_conversion  float32 `json:"itemuom_conversion"`
 	Itemuom_create      string  `json:"itemuom_create"`
 	Itemuom_update      string  `json:"itemuom_update"`
+}
+type Model_itemuomshare struct {
+	Itemuom_iduom string `json:"itemuom_iduom"`
 }
 type Controller_cateitemsave struct {
 	Page            string `json:"page" validate:"required"`

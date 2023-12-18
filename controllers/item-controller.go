@@ -16,6 +16,7 @@ import (
 
 const Fieldcateitem_home_redis = "LISTCATEITEM_BACKEND"
 const Fielditem_home_redis = "LISTITEM_BACKEND"
+const Fielditem_share_redis = "LISTITEM_SHARE_BACKEND"
 const Fielditemuom_home_redis = "LISTITEMUOM_BACKEND"
 
 func Cateitemhome(c *fiber.Ctx) error {
@@ -216,6 +217,91 @@ func Itemhome(c *fiber.Ctx) error {
 			"perpage":      perpage_RD,
 			"totalrecord":  totalrecord_RD,
 			"time":         time.Since(render_page).String(),
+		})
+	}
+}
+func Itemshare(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_item)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+
+	var obj entities.Model_itemshare
+	var arraobj []entities.Model_itemshare
+	render_page := time.Now()
+	resultredis, flag := helpers.GetRedis(Fielditem_share_redis + "_" + client.Item_search)
+	jsonredis := []byte(resultredis)
+	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
+	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		itemshare_id, _ := jsonparser.GetString(value, "itemshare_id")
+		itemshare_nmcateitem, _ := jsonparser.GetString(value, "itemshare_nmcateitem")
+		itemshare_name, _ := jsonparser.GetString(value, "itemshare_name")
+		itemshare_descp, _ := jsonparser.GetString(value, "itemshare_descp")
+		itemshare_urlimg, _ := jsonparser.GetString(value, "itemshare_urlimg")
+
+		var objitemuom entities.Model_itemuomshare
+		var arraobjitemuom []entities.Model_itemuomshare
+		record_itemuom_RD, _, _, _ := jsonparser.Get(value, "itemshare_uom")
+		jsonparser.ArrayEach(record_itemuom_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+			itemuom_iduom, _ := jsonparser.GetString(value, "itemuom_iduom")
+
+			objitemuom.Itemuom_iduom = itemuom_iduom
+			arraobjitemuom = append(arraobjitemuom, objitemuom)
+		})
+
+		obj.Itemshare_id = itemshare_id
+		obj.Itemshare_nmcateitem = itemshare_nmcateitem
+		obj.Itemshare_name = itemshare_name
+		obj.Itemshare_descp = itemshare_descp
+		obj.Itemshare_urlimg = itemshare_urlimg
+		obj.Itemshare_uom = arraobjitemuom
+
+		arraobj = append(arraobj, obj)
+	})
+
+	if !flag {
+		result, err := models.Fetch_itemShare(client.Item_search)
+		if err != nil {
+			c.Status(fiber.StatusBadRequest)
+			return c.JSON(fiber.Map{
+				"status":  fiber.StatusBadRequest,
+				"message": err.Error(),
+				"record":  nil,
+			})
+		}
+		helpers.SetRedis(Fielditem_share_redis+"_"+client.Item_search, result, 30*time.Minute)
+		fmt.Println("ITEM MYSQL")
+		return c.JSON(result)
+	} else {
+		fmt.Println("ITEM CACHE")
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusOK,
+			"message": "Success",
+			"record":  arraobj,
+			"time":    time.Since(render_page).String(),
 		})
 	}
 }
@@ -508,4 +594,6 @@ func _deleteredis_item(search, iditem string, page int) {
 	val_master_itemuom := helpers.DeleteRedis(Fielditemuom_home_redis + "_" + iditem)
 	fmt.Printf("Redis Delete BACKEND ITEMUOM - %s : %d\n", iditem, val_master_itemuom)
 
+	val_master_itemshare := helpers.DeleteRedis(Fielditem_share_redis + "_" + search)
+	fmt.Printf("Redis Delete BACKEND ITEMSHARE - %s : %d\n", iditem, val_master_itemshare)
 }

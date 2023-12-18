@@ -152,15 +152,11 @@ func Employeeshare(c *fiber.Ctx) error {
 			"record":  errors,
 		})
 	}
-	if client.Employee_search != "" {
-		val_pattern := helpers.DeleteRedis(Fieldemployeeshare_home_redis + "_" + client.Employee_search)
-		fmt.Printf("Redis Delete BACKEND EMPLOYEE SHARE : %d", val_pattern)
-	}
 
 	var obj entities.Model_employeeshare
 	var arraobj []entities.Model_employeeshare
 	render_page := time.Now()
-	resultredis, flag := helpers.GetRedis(Fieldemployeeshare_home_redis + "_" + client.Employee_search)
+	resultredis, flag := helpers.GetRedis(Fieldemployeeshare_home_redis + "_" + client.Employee_iddepartement)
 	jsonredis := []byte(resultredis)
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
@@ -173,7 +169,7 @@ func Employeeshare(c *fiber.Ctx) error {
 	})
 
 	if !flag {
-		result, err := models.Fetch_employeeShare(client.Employee_search, client.Employee_iddepartement)
+		result, err := models.Fetch_employeeShare(client.Employee_iddepartement)
 		if err != nil {
 			c.Status(fiber.StatusBadRequest)
 			return c.JSON(fiber.Map{
@@ -182,7 +178,7 @@ func Employeeshare(c *fiber.Ctx) error {
 				"record":  nil,
 			})
 		}
-		helpers.SetRedis(Fieldemployeeshare_home_redis+"_"+client.Employee_search, result, 60*time.Minute)
+		helpers.SetRedis(Fieldemployeeshare_home_redis+"_"+client.Employee_iddepartement, result, 60*time.Minute)
 		fmt.Println("EMPLOYEE SHARE MYSQL")
 		return c.JSON(result)
 	} else {
