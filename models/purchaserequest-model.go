@@ -313,16 +313,18 @@ func Save_purchaserequest(admin, idrecord, idbranch, iddepartement, idemployee, 
 					$13, $14  
 				)
 			`
-		expiredoc := tglnow.Add(2, "days").Format("YYYY-MM-DD HH:mm:ss")
+
 		field_column := database_purchaserequest_local + tglnow.Format("YYYY")
 		idrecord_counter := Get_counter(field_column)
 		idrecord := "PR_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
 		periode_doc := tglnow.Format("YYYY") + "-" + tglnow.Format("MM")
+		start_date := tglnow.Format("YYYY-MM-DD HH:mm:ss")
+		expiredoc := tglnow.Add(2, "days").Format("YYYY-MM-DD HH:mm:ss")
 		flag_insert, msg_insert := Exec_SQL(sql_insert, database_purchaserequest_local, "INSERT",
 			idrecord, idbranch, iddepartement, idemployee, idcurr,
 			tipedoc, periode_doc, "OPEN", remark, expiredoc,
 			total_item, subtotalpr,
-			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
+			admin, start_date)
 
 		if flag_insert {
 			msg = "Succes"
