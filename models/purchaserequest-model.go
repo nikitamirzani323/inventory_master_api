@@ -344,6 +344,90 @@ func Save_purchaserequest(admin, idrecord, idbranch, iddepartement, idemployee, 
 		} else {
 			fmt.Println(msg_insert)
 		}
+	} else {
+		_, totaldetail_db := _Get_info_pr(idrecord)
+		if totaldetail_db > 0 {
+			sql_delete := `
+				DELETE FROM  
+				` + database_purchaserequestdetail_local + `   
+				WHERE idpurchaserequest=$1  
+			`
+
+			flag_delete, msg_delete := Exec_SQL(sql_delete, database_purchaserequestdetail_local, "DELETE", idrecord)
+
+			if flag_delete {
+				msg = "Succes"
+				//UPDATE
+				sql_update := `
+					UPDATE 
+					` + database_purchaserequest_local + `  
+					SET remarkpurchaserequest=$1, total_item=$2, total_pr=$3,   
+					updatepurchaserequest=$4, updatedatepurchaserequest=$5        
+					WHERE idpurchaserequest=$6      
+				`
+
+				flag_update, msg_update := Exec_SQL(sql_update, database_purchaserequest_local, "UPDATE",
+					remark, total_item, subtotalpr,
+					admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
+
+				if flag_update {
+					msg = "Succes"
+
+					json := []byte(listdetail)
+					jsonparser.ArrayEach(json, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+						detail_iditem, _ := jsonparser.GetString(value, "detail_iditem")
+						detail_nmitem, _ := jsonparser.GetString(value, "detail_nmitem")
+						detail_descpitem, _ := jsonparser.GetString(value, "detail_descpitem")
+						detail_purpose, _ := jsonparser.GetString(value, "detail_purpose")
+						detail_iduom, _ := jsonparser.GetString(value, "detail_iduom")
+						detail_qty, _ := jsonparser.GetFloat(value, "detail_qty")
+						detail_price, _ := jsonparser.GetFloat(value, "detail_price")
+
+						Save_purchaserequestdetail(admin, "", idrecord,
+							detail_iditem, detail_nmitem, detail_descpitem, detail_purpose, detail_iduom,
+							"OPEN", "New", detail_qty, detail_price)
+					})
+				} else {
+					fmt.Println(msg_update)
+				}
+			} else {
+				fmt.Println(msg_delete)
+			}
+		} else {
+			sql_update := `
+					UPDATE 
+					` + database_purchaserequest_local + `  
+					SET remarkpurchaserequest=$1, total_item=$2, total_pr=$3,   
+					updatepurchaserequest=$4, updatedatepurchaserequest=$5        
+					WHERE idpurchaserequest=$6      
+				`
+
+			flag_update, msg_update := Exec_SQL(sql_update, database_purchaserequest_local, "UPDATE",
+				remark, total_item, subtotalpr,
+				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
+
+			if flag_update {
+				msg = "Succes"
+
+				json := []byte(listdetail)
+				jsonparser.ArrayEach(json, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+					detail_iditem, _ := jsonparser.GetString(value, "detail_iditem")
+					detail_nmitem, _ := jsonparser.GetString(value, "detail_nmitem")
+					detail_descpitem, _ := jsonparser.GetString(value, "detail_descpitem")
+					detail_purpose, _ := jsonparser.GetString(value, "detail_purpose")
+					detail_iduom, _ := jsonparser.GetString(value, "detail_iduom")
+					detail_qty, _ := jsonparser.GetFloat(value, "detail_qty")
+					detail_price, _ := jsonparser.GetFloat(value, "detail_price")
+
+					Save_purchaserequestdetail(admin, "", idrecord,
+						detail_iditem, detail_nmitem, detail_descpitem, detail_purpose, detail_iduom,
+						"OPEN", "New", detail_qty, detail_price)
+				})
+			} else {
+				fmt.Println(msg_update)
+			}
+		}
+
 	}
 
 	res.Status = fiber.StatusOK
