@@ -15,8 +15,8 @@ type Model_employee struct {
 	Employee_update        string `json:"employee_update"`
 }
 type Model_employeeshare struct {
-	Departement_id   string `json:"departement_id"`
-	Departement_name string `json:"departement_name"`
+	Employee_id   string `json:"employee_id"`
+	Employee_name string `json:"employee_name"`
 }
 type Controller_employeesave struct {
 	Page                   string `json:"page" validate:"required"`
@@ -35,4 +35,8 @@ type Controller_employeesave struct {
 type Controller_employee struct {
 	Employee_search string `json:"employee_search"`
 	Employee_page   int    `json:"employee_page"`
+}
+type Controller_employeeshare struct {
+	Employee_search        string `json:"employee_search"`
+	Employee_iddepartement string `json:"employee_iddepartement"`
 }

@@ -68,7 +68,7 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 		sql_select += "ORDER BY A.createdatepurchaserequest DESC  OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
 
 	} else {
-		sql_selectcount += "WHERE LOWER(A.idpurchaserequest) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_select += "WHERE LOWER(A.idpurchaserequest) LIKE '%" + strings.ToLower(search) + "%' "
 		sql_select += "ORDER BY A.createdatepurchaserequest DESC   LIMIT " + strconv.Itoa(perpage)
 	}
 

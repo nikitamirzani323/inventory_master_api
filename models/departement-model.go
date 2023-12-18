@@ -57,8 +57,8 @@ func Fetch_departementHome(search string, page int) (helpers.Responsepaging, err
 		sql_select += "ORDER BY createdatedepartement DESC  OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
 
 	} else {
-		sql_selectcount += "WHERE LOWER(iddepartement) LIKE '%" + strings.ToLower(search) + "%' "
-		sql_selectcount += "OR LOWER(nmdepartement) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_select += "WHERE LOWER(iddepartement) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_select += "OR LOWER(nmdepartement) LIKE '%" + strings.ToLower(search) + "%' "
 		sql_select += "ORDER BY createdatedepartement DESC   LIMIT " + strconv.Itoa(perpage)
 	}
 

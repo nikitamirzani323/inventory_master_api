@@ -61,8 +61,8 @@ func Fetch_employeeHome(search string, page int) (helpers.Responseemployee, erro
 		sql_select += "ORDER BY A.createdateemployee DESC  OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
 
 	} else {
-		sql_selectcount += "WHERE LOWER(A.idemployee) LIKE '%" + strings.ToLower(search) + "%' "
-		sql_selectcount += "OR LOWER(A.nmemployee) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_select += "WHERE LOWER(A.idemployee) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_select += "OR LOWER(A.nmemployee) LIKE '%" + strings.ToLower(search) + "%' "
 		sql_select += "ORDER BY A.createdateemployee DESC   LIMIT " + strconv.Itoa(perpage)
 	}
 
@@ -140,6 +140,49 @@ func Fetch_employeeHome(search string, page int) (helpers.Responseemployee, erro
 	res.Listdepartement = arraobjdepartement
 	res.Perpage = perpage
 	res.Totalrecord = totalrecord
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
+func Fetch_employeeShare(search, iddepartement string) (helpers.Response, error) {
+	var obj entities.Model_employeeshare
+	var arraobj []entities.Model_employeeshare
+	var res helpers.Response
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "idemployee,nmemployee "
+	sql_select += "FROM " + database_employee_local + "    "
+	sql_select += "WHERE LOWER(nmemployee) LIKE '%" + strings.ToLower(search) + "%' "
+	sql_select += "AND iddepartement='" + iddepartement + "' "
+	sql_select += "AND statusemployee='Y' "
+	sql_select += "ORDER BY nmemployee ASC  LIMIT 100 "
+
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		var (
+			idemployee_db, nmemployee_db string
+		)
+
+		err = row.Scan(&idemployee_db, &nmemployee_db)
+
+		helpers.ErrorCheck(err)
+
+		obj.Employee_id = idemployee_db
+		obj.Employee_name = nmemployee_db
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+	}
+	defer row.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = arraobj
 	res.Time = time.Since(start).String()
 
 	return res, nil

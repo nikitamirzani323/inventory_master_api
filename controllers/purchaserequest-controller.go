@@ -146,7 +146,7 @@ func Purchaserequesthome(c *fiber.Ctx) error {
 			"status":          fiber.StatusOK,
 			"message":         "Success",
 			"record":          arraobj,
-			"listbranch":      Listbranch_RD,
+			"listbranch":      arraobjbranch,
 			"listdepartement": arraobjdepartement,
 			"listcurr":        arraobjcurr,
 			"perpage":         perpage_RD,

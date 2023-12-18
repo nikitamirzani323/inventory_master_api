@@ -57,7 +57,7 @@ func Fetch_catevendorHome(search string, page int) (helpers.Responsepaging, erro
 		sql_select += "ORDER BY createdatecatevendor DESC  OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
 
 	} else {
-		sql_selectcount += "WHERE LOWER(nmcatevendor) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_select += "WHERE LOWER(nmcatevendor) LIKE '%" + strings.ToLower(search) + "%' "
 		sql_select += "ORDER BY createdatecatevendor DESC   LIMIT " + strconv.Itoa(perpage)
 	}
 
@@ -150,8 +150,8 @@ func Fetch_vendorHome(search string, page int) (helpers.Responsevendor, error) {
 		sql_select += "ORDER BY A.createdatevendor DESC  OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
 
 	} else {
-		sql_selectcount += "WHERE LOWER(A.idvendor) LIKE '%" + strings.ToLower(search) + "%' "
-		sql_selectcount += "OR LOWER(A.nmvendor) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_select += "WHERE LOWER(A.idvendor) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_select += "OR LOWER(A.nmvendor) LIKE '%" + strings.ToLower(search) + "%' "
 		sql_select += "ORDER BY A.createdatevendor DESC   LIMIT " + strconv.Itoa(perpage)
 	}
 
