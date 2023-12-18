@@ -82,6 +82,7 @@ func Purchaserequesthome(c *fiber.Ctx) error {
 		purchaserequest_totalpr, _ := jsonparser.GetFloat(value, "purchaserequest_totalpr")
 		purchaserequest_totalpo, _ := jsonparser.GetFloat(value, "purchaserequest_totalpo")
 		purchaserequest_remark, _ := jsonparser.GetString(value, "purchaserequest_remark")
+		purchaserequest_docexpire, _ := jsonparser.GetString(value, "purchaserequest_docexpire")
 		purchaserequest_status, _ := jsonparser.GetString(value, "purchaserequest_status")
 		purchaserequest_status_css, _ := jsonparser.GetString(value, "purchaserequest_status_css")
 		purchaserequest_create, _ := jsonparser.GetString(value, "purchaserequest_create")
@@ -101,6 +102,7 @@ func Purchaserequesthome(c *fiber.Ctx) error {
 		obj.Purchaserequest_totalpr = float64(purchaserequest_totalpr)
 		obj.Purchaserequest_totalpo = float64(purchaserequest_totalpo)
 		obj.Purchaserequest_remark = purchaserequest_remark
+		obj.Purchaserequest_docexpire = purchaserequest_docexpire
 		obj.Purchaserequest_status = purchaserequest_status
 		obj.Purchaserequest_status_css = purchaserequest_status_css
 		obj.Purchaserequest_create = purchaserequest_create

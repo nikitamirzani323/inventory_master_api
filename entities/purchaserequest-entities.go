@@ -15,6 +15,7 @@ type Model_purchaserequest struct {
 	Purchaserequest_totalpr       float64 `json:"purchaserequest_totalpr"`
 	Purchaserequest_totalpo       float64 `json:"purchaserequest_totalpo"`
 	Purchaserequest_remark        string  `json:"purchaserequest_remark"`
+	Purchaserequest_docexpire     string  `json:"purchaserequest_docexpire"`
 	Purchaserequest_status        string  `json:"purchaserequest_status"`
 	Purchaserequest_status_css    string  `json:"purchaserequest_status_css"`
 	Purchaserequest_create        string  `json:"purchaserequest_create"`

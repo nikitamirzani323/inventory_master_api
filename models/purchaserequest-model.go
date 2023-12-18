@@ -57,7 +57,7 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 	sql_select := ""
 	sql_select += "SELECT "
 	sql_select += "A.idpurchaserequest, A.idbranch, B.nmbranch, A.iddepartement, C.nmdepartement, "
-	sql_select += "A.idemployee, D.nmemployee, A.idcurr, A.tipe_document, A.periode_document, A.statuspurchaserequest, A.remarkpurchaserequest,  "
+	sql_select += "A.idemployee, D.nmemployee, A.idcurr, A.tipe_document, A.periode_document, A.statuspurchaserequest, A.remarkpurchaserequest, A.docexpirepurchaserequest,  "
 	sql_select += "A.total_item, A.total_pr , A.total_po,   "
 	sql_select += "A.createpurchaserequest, to_char(COALESCE(A.createdatepurchaserequest,now()), 'YYYY-MM-DD HH24:MI:SS'), "
 	sql_select += "A.updatepurchaserequest, to_char(COALESCE(A.updatedatepurchaserequest,now()), 'YYYY-MM-DD HH24:MI:SS')  "
@@ -77,14 +77,14 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 	helpers.ErrorCheck(err)
 	for row.Next() {
 		var (
-			idpurchaserequest_db, idbranch_db, nmbranch_db, iddepartement_db, nmdepartement_db                                                 string
-			idemployee_db, nmemployee_db, idcurr_db, tipe_document_db, periode_document_db, statuspurchaserequest_db, remarkpurchaserequest_db string
-			total_item_db, total_pr_db, total_po_db                                                                                            float64
-			createpurchaserequest_db, createdatepurchaserequest_db, updatepurchaserequest_db, updatedatepurchaserequest_db                     string
+			idpurchaserequest_db, idbranch_db, nmbranch_db, iddepartement_db, nmdepartement_db                                                                              string
+			idemployee_db, nmemployee_db, idcurr_db, tipe_document_db, periode_document_db, statuspurchaserequest_db, remarkpurchaserequest_db, docexpirepurchaserequest_db string
+			total_item_db, total_pr_db, total_po_db                                                                                                                         float64
+			createpurchaserequest_db, createdatepurchaserequest_db, updatepurchaserequest_db, updatedatepurchaserequest_db                                                  string
 		)
 
 		err = row.Scan(&idpurchaserequest_db, &idbranch_db, &nmbranch_db, &iddepartement_db, &nmdepartement_db,
-			&idemployee_db, &nmemployee_db, &idcurr_db, &tipe_document_db, &periode_document_db, &statuspurchaserequest_db, &remarkpurchaserequest_db,
+			&idemployee_db, &nmemployee_db, &idcurr_db, &tipe_document_db, &periode_document_db, &statuspurchaserequest_db, &remarkpurchaserequest_db, &docexpirepurchaserequest_db,
 			&total_item_db, &total_pr_db, &total_po_db,
 			&createpurchaserequest_db, &createdatepurchaserequest_db, &updatepurchaserequest_db, &updatedatepurchaserequest_db)
 
@@ -123,6 +123,7 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 		obj.Purchaserequest_totalpr = total_pr_db
 		obj.Purchaserequest_totalpo = total_po_db
 		obj.Purchaserequest_remark = remarkpurchaserequest_db
+		obj.Purchaserequest_docexpire = docexpirepurchaserequest_db
 		obj.Purchaserequest_status = statuspurchaserequest_db
 		obj.Purchaserequest_status_css = status_css
 		obj.Purchaserequest_create = create
@@ -225,23 +226,24 @@ func Save_purchaserequest(admin, idrecord, idbranch, iddepartement, idemployee, 
 				insert into
 				` + database_purchaserequest_local + ` (
 					idpurchaserequest , idbranch, iddepartement, idemployee, idcurr,  
-					tipe_document , periode_document, statuspurchaserequest, remarkpurchaserequest, 
+					tipe_document , periode_document, statuspurchaserequest, remarkpurchaserequest, docexpirepurchaserequest,
 					total_item , total_pr,  
 					createpurchaserequest, createdatepurchaserequest 
 				) values (
 					$1, $2, $3, $4, $5,      
-					$6, $7, $8, $9, 
-					$10, $11, 
-					$12, $13  
+					$6, $7, $8, $9, $10, 
+					$11, $12, 
+					$13, $14  
 				)
 			`
+		expiredoc := tglnow.Add(2, "days").Format("YYYY-MM-DD HH:mm:ss")
 		field_column := database_purchaserequest_local + tglnow.Format("YYYY")
 		idrecord_counter := Get_counter(field_column)
 		idrecord := "PR_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
 		periode_doc := tglnow.Format("YYYY") + "-" + tglnow.Format("MM")
 		flag_insert, msg_insert := Exec_SQL(sql_insert, database_purchaserequest_local, "INSERT",
 			idrecord, idbranch, iddepartement, idemployee, idcurr,
-			tipedoc, periode_doc, "OPEN", remark,
+			tipedoc, periode_doc, "OPEN", remark, expiredoc,
 			total_item, subtotalpr,
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
