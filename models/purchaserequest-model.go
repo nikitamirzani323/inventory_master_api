@@ -110,6 +110,7 @@ func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchas
 		}
 
 		obj.Purchaserequest_id = idpurchaserequest_db
+		obj.Purchaserequest_date = createdatepurchaserequest_db
 		obj.Purchaserequest_idcurr = idcurr_db
 		obj.Purchaserequest_idbranch = idbranch_db
 		obj.Purchaserequest_nmbranch = nmbranch_db

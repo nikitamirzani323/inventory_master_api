@@ -2,6 +2,7 @@ package entities
 
 type Model_purchaserequest struct {
 	Purchaserequest_id            string  `json:"purchaserequest_id"`
+	Purchaserequest_date          string  `json:"purchaserequest_date"`
 	Purchaserequest_idbranch      string  `json:"purchaserequest_idbranch"`
 	Purchaserequest_iddepartement string  `json:"purchaserequest_iddepartement"`
 	Purchaserequest_idemployee    string  `json:"purchaserequest_idemployee"`

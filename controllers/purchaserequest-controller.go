@@ -69,6 +69,7 @@ func Purchaserequesthome(c *fiber.Ctx) error {
 	Listcurr_RD, _, _, _ := jsonparser.Get(jsonredis, "listcurr")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		purchaserequest_id, _ := jsonparser.GetString(value, "purchaserequest_id")
+		purchaserequest_date, _ := jsonparser.GetString(value, "purchaserequest_date")
 		purchaserequest_idbranch, _ := jsonparser.GetString(value, "purchaserequest_idbranch")
 		purchaserequest_iddepartement, _ := jsonparser.GetString(value, "purchaserequest_iddepartement")
 		purchaserequest_idemployee, _ := jsonparser.GetString(value, "purchaserequest_idemployee")
@@ -89,6 +90,7 @@ func Purchaserequesthome(c *fiber.Ctx) error {
 		purchaserequest_update, _ := jsonparser.GetString(value, "purchaserequest_update")
 
 		obj.Purchaserequest_id = purchaserequest_id
+		obj.Purchaserequest_date = purchaserequest_date
 		obj.Purchaserequest_idbranch = purchaserequest_idbranch
 		obj.Purchaserequest_iddepartement = purchaserequest_iddepartement
 		obj.Purchaserequest_idemployee = purchaserequest_idemployee
