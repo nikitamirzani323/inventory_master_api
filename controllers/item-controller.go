@@ -14,11 +14,166 @@ import (
 	"github.com/nikitamirzani323/BTANGKAS_SUPER_API/models"
 )
 
+const Fieldmerek_home_redis = "LISTMEREK_BACKEND"
 const Fieldcateitem_home_redis = "LISTCATEITEM_BACKEND"
 const Fielditem_home_redis = "LISTITEM_BACKEND"
 const Fielditem_share_redis = "LISTITEM_SHARE_BACKEND"
 const Fielditemuom_home_redis = "LISTITEMUOM_BACKEND"
 
+func Merekhome(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_merek)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+	if client.Merek_search != "" {
+		val_pattern := helpers.DeleteRedis(Fieldmerek_home_redis + "_" + strconv.Itoa(client.Merek_page) + "_" + client.Merek_search)
+		fmt.Printf("Redis Delete BACKEND MEREK : %d", val_pattern)
+	}
+
+	var obj entities.Model_merek
+	var arraobj []entities.Model_merek
+	render_page := time.Now()
+	resultredis, flag := helpers.GetRedis(Fieldmerek_home_redis + "_" + strconv.Itoa(client.Merek_page) + "_" + client.Merek_search)
+	jsonredis := []byte(resultredis)
+	perpage_RD, _ := jsonparser.GetInt(jsonredis, "perpage")
+	totalrecord_RD, _ := jsonparser.GetInt(jsonredis, "totalrecord")
+	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
+	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		merek_id, _ := jsonparser.GetInt(value, "merek_id")
+		merek_name, _ := jsonparser.GetString(value, "merek_name")
+		merek_status, _ := jsonparser.GetString(value, "merek_status")
+		merek_status_css, _ := jsonparser.GetString(value, "merek_status_css")
+		merek_create, _ := jsonparser.GetString(value, "merek_create")
+		merek_update, _ := jsonparser.GetString(value, "merek_update")
+
+		obj.Merek_id = int(merek_id)
+		obj.Merek_name = merek_name
+		obj.Merek_status = merek_status
+		obj.Merek_status_css = merek_status_css
+		obj.Merek_create = merek_create
+		obj.Merek_update = merek_update
+		arraobj = append(arraobj, obj)
+	})
+
+	if !flag {
+		result, err := models.Fetch_merekHome(client.Merek_search, client.Merek_page)
+		if err != nil {
+			c.Status(fiber.StatusBadRequest)
+			return c.JSON(fiber.Map{
+				"status":  fiber.StatusBadRequest,
+				"message": err.Error(),
+				"record":  nil,
+			})
+		}
+		helpers.SetRedis(Fieldmerek_home_redis+"_"+strconv.Itoa(client.Merek_page)+"_"+client.Merek_search, result, 60*time.Minute)
+		fmt.Println("MEREK MYSQL")
+		return c.JSON(result)
+	} else {
+		fmt.Println("MEREK CACHE")
+		return c.JSON(fiber.Map{
+			"status":      fiber.StatusOK,
+			"message":     "Success",
+			"record":      arraobj,
+			"perpage":     perpage_RD,
+			"totalrecord": totalrecord_RD,
+			"time":        time.Since(render_page).String(),
+		})
+	}
+}
+func Merekshare(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_merek)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+	if client.Merek_search != "" {
+		val_pattern := helpers.DeleteRedis(Fieldmerek_home_redis + "_" + client.Merek_search)
+		fmt.Printf("Redis Delete BACKEND MEREK : %d", val_pattern)
+	}
+
+	var obj entities.Model_merekshare
+	var arraobj []entities.Model_merekshare
+	render_page := time.Now()
+	resultredis, flag := helpers.GetRedis(Fieldmerek_home_redis + "_" + client.Merek_search)
+	jsonredis := []byte(resultredis)
+	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
+	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		merek_id, _ := jsonparser.GetInt(value, "merek_id")
+		merek_name, _ := jsonparser.GetString(value, "merek_name")
+
+		obj.Merek_id = int(merek_id)
+		obj.Merek_name = merek_name
+		arraobj = append(arraobj, obj)
+	})
+
+	if !flag {
+		result, err := models.Fetch_merekHome(client.Merek_search, client.Merek_page)
+		if err != nil {
+			c.Status(fiber.StatusBadRequest)
+			return c.JSON(fiber.Map{
+				"status":  fiber.StatusBadRequest,
+				"message": err.Error(),
+				"record":  nil,
+			})
+		}
+		helpers.SetRedis(Fieldmerek_home_redis+"_"+client.Merek_search, result, 60*time.Minute)
+		fmt.Println("MEREK SHARE MYSQL")
+		return c.JSON(result)
+	} else {
+		fmt.Println("MEREK SHARE CACHE")
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusOK,
+			"message": "Success",
+			"record":  arraobj,
+			"time":    time.Since(render_page).String(),
+		})
+	}
+}
 func Cateitemhome(c *fiber.Ctx) error {
 	var errors []*helpers.ErrorResponse
 	client := new(entities.Controller_cateitem)
@@ -150,6 +305,8 @@ func Itemhome(c *fiber.Ctx) error {
 	listcateitem_RD, _, _, _ := jsonparser.Get(jsonredis, "listcateitem")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		item_id, _ := jsonparser.GetString(value, "item_id")
+		item_idmerek, _ := jsonparser.GetInt(value, "item_idmerek")
+		item_nmmerek, _ := jsonparser.GetString(value, "item_nmmerek")
 		item_idcateitem, _ := jsonparser.GetInt(value, "item_idcateitem")
 		item_nmcateitem, _ := jsonparser.GetString(value, "item_nmcateitem")
 		item_iduom, _ := jsonparser.GetString(value, "item_iduom")
@@ -168,6 +325,8 @@ func Itemhome(c *fiber.Ctx) error {
 		item_update, _ := jsonparser.GetString(value, "item_update")
 
 		obj.Item_id = item_id
+		obj.Item_idmerek = int(item_idmerek)
+		obj.Item_nmmerek = item_nmmerek
 		obj.Item_idcateitem = int(item_idcateitem)
 		obj.Item_nmcateitem = item_nmcateitem
 		obj.Item_iduom = item_iduom
@@ -384,6 +543,56 @@ func Itemuom(c *fiber.Ctx) error {
 		})
 	}
 }
+func MerekSave(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_mereksave)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+	user := c.Locals("jwt").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["name"].(string)
+	temp_decp := helpers.Decryption(name)
+	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
+
+	// admin, name, status, sData string, idrecord int
+	result, err := models.Save_merek(
+		client_admin,
+		client.Merek_name, client.Merek_status, client.Sdata, client.Merek_id)
+	if err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	_deleteredis_item(client.Merek_search, "", client.Merek_page)
+	return c.JSON(result)
+}
 func CateitemSave(c *fiber.Ctx) error {
 	var errors []*helpers.ErrorResponse
 	client := new(entities.Controller_cateitemsave)
@@ -473,7 +682,7 @@ func ItemSave(c *fiber.Ctx) error {
 		client_admin,
 		client.Item_id, client.Item_iduom, client.Item_name, client.Item_descp, client.Item_urlimg,
 		client.Item_inventory, client.Item_sales, client.Item_purchase, client.Item_status,
-		client.Sdata, client.Item_idcateitem)
+		client.Sdata, client.Item_idcateitem, client.Item_idmerek)
 	if err != nil {
 		c.Status(fiber.StatusBadRequest)
 		return c.JSON(fiber.Map{
@@ -585,6 +794,9 @@ func ItemuomDelete(c *fiber.Ctx) error {
 	return c.JSON(result)
 }
 func _deleteredis_item(search, iditem string, page int) {
+	val_master_merek := helpers.DeleteRedis(Fieldmerek_home_redis + "_" + strconv.Itoa(page) + "_" + search)
+	fmt.Printf("Redis Delete BACKEND MEREK : %d\n", val_master_merek)
+
 	val_master := helpers.DeleteRedis(Fieldcateitem_home_redis + "_" + strconv.Itoa(page) + "_" + search)
 	fmt.Printf("Redis Delete BACKEND CATEITEM : %d\n", val_master)
 

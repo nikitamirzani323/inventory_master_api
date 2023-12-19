@@ -16,9 +16,144 @@ import (
 	"github.com/nleeper/goment"
 )
 
+const database_merek_local = configs.DB_tbl_mst_merek
 const database_cateitem_local = configs.DB_tbl_mst_categoryitem
 const database_item_local = configs.DB_tbl_mst_item
 
+func Fetch_merekHome(search string, page int) (helpers.Responsepaging, error) {
+	var obj entities.Model_merek
+	var arraobj []entities.Model_merek
+	var res helpers.Responsepaging
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	perpage := configs.PAGING_PAGE
+	totalrecord := 0
+	offset := page
+	sql_selectcount := ""
+	sql_selectcount += ""
+	sql_selectcount += "SELECT "
+	sql_selectcount += "COUNT(idmerek) as totalcateitem  "
+	sql_selectcount += "FROM " + database_merek_local + "  "
+	if search != "" {
+		sql_selectcount += "WHERE LOWER(nmmerek) LIKE '%" + strings.ToLower(search) + "%' "
+	}
+	row_selectcount := con.QueryRowContext(ctx, sql_selectcount)
+	switch e_selectcount := row_selectcount.Scan(&totalrecord); e_selectcount {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e_selectcount)
+	}
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "idmerek , nmmerek, statusmerek, "
+	sql_select += "createmerek, to_char(COALESCE(createdatemerek,now()), 'YYYY-MM-DD HH24:MI:SS'), "
+	sql_select += "updatemerek, to_char(COALESCE(updatedatemerek,now()), 'YYYY-MM-DD HH24:MI:SS') "
+	sql_select += "FROM " + database_merek_local + "   "
+	if search == "" {
+		sql_select += "ORDER BY createdatemerek DESC  OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
+
+	} else {
+		sql_select += "WHERE LOWER(nmmerek) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_select += "ORDER BY createdatemerek DESC   LIMIT " + strconv.Itoa(perpage)
+	}
+
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		var (
+			idmerek_db                                                             int
+			nmmerek_db, statusmerek_db                                             string
+			createmerek_db, createdatemerek_db, updatemerek_db, updatedatemerek_db string
+		)
+
+		err = row.Scan(&idmerek_db, &nmmerek_db, &statusmerek_db,
+			&createmerek_db, &createdatemerek_db, &updatemerek_db, &updatedatemerek_db)
+
+		helpers.ErrorCheck(err)
+		create := ""
+		update := ""
+		status_css := configs.STATUS_CANCEL
+		if createmerek_db != "" {
+			create = createmerek_db + ", " + createdatemerek_db
+		}
+		if updatemerek_db != "" {
+			update = updatemerek_db + ", " + updatedatemerek_db
+		}
+		if statusmerek_db == "Y" {
+			status_css = configs.STATUS_COMPLETE
+		}
+
+		obj.Merek_id = idmerek_db
+		obj.Merek_name = nmmerek_db
+		obj.Merek_status = statusmerek_db
+		obj.Merek_status_css = status_css
+		obj.Merek_create = create
+		obj.Merek_update = update
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+	}
+	defer row.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Perpage = perpage
+	res.Totalrecord = totalrecord
+	res.Record = arraobj
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
+func Fetch_merekShare(search string) (helpers.Response, error) {
+	var obj entities.Model_merekshare
+	var arraobj []entities.Model_merekshare
+	var res helpers.Response
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "idmerek , nmmerek "
+	sql_select += "FROM " + database_merek_local + "   "
+	sql_select += "WHERE statusmerek='Y' "
+	if search != "" {
+		sql_select += "AND LOWER(nmmerek) LIKE '%" + strings.ToLower(search) + "%' "
+	} else {
+		sql_select += "ORDER BY nmmerek DESC LIMIT " + strconv.Itoa(configs.PAGING_PAGE)
+	}
+
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		var (
+			idmerek_db int
+			nmmerek_db string
+		)
+
+		err = row.Scan(&idmerek_db, &nmmerek_db)
+
+		helpers.ErrorCheck(err)
+
+		obj.Merek_id = idmerek_db
+		obj.Merek_name = nmmerek_db
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+	}
+	defer row.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = arraobj
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
 func Fetch_catetemHome(search string, page int) (helpers.Responsepaging, error) {
 	var obj entities.Model_cateitem
 	var arraobj []entities.Model_cateitem
@@ -139,7 +274,7 @@ func Fetch_itemHome(search string, page int) (helpers.Responseitem, error) {
 
 	sql_select := ""
 	sql_select += "SELECT "
-	sql_select += "A.iditem , A.idcateitem, B.nmcateitem,  "
+	sql_select += "A.iditem , A.idmerek, A.idcateitem, B.nmcateitem,  "
 	sql_select += "A.nmitem , A.descpitem, A.urlimgitem, A.inventory_item, A.sales_item, A.purchase_item, A.statusitem,  "
 	sql_select += "A.createitem, to_char(COALESCE(A.createdateitem,now()), 'YYYY-MM-DD HH24:MI:SS'), "
 	sql_select += "A.updateitem, to_char(COALESCE(A.updatedateitem,now()), 'YYYY-MM-DD HH24:MI:SS')  "
@@ -158,12 +293,12 @@ func Fetch_itemHome(search string, page int) (helpers.Responseitem, error) {
 	helpers.ErrorCheck(err)
 	for row.Next() {
 		var (
-			idcateitem_db                                                                                                                       int
+			idmerek_db, idcateitem_db                                                                                                           int
 			iditem_db, nmcateitem_db, nmitem_db, descpitem_db, urlimgitem_db, inventory_item_db, sales_item_db, purchase_item_db, statusitem_db string
 			createitem_db, createdateitem_db, updateitem_db, updatedateitem_db                                                                  string
 		)
 
-		err = row.Scan(&iditem_db, &idcateitem_db, &nmcateitem_db, &nmitem_db,
+		err = row.Scan(&iditem_db, &idmerek_db, &idcateitem_db, &nmcateitem_db, &nmitem_db,
 			&descpitem_db, &urlimgitem_db, &inventory_item_db, &sales_item_db, &purchase_item_db, &statusitem_db,
 			&createitem_db, &createdateitem_db, &updateitem_db, &updatedateitem_db)
 
@@ -194,6 +329,8 @@ func Fetch_itemHome(search string, page int) (helpers.Responseitem, error) {
 		}
 
 		obj.Item_id = iditem_db
+		obj.Item_idmerek = idmerek_db
+		obj.Item_nmmerek = _Get_merek(idmerek_db)
 		obj.Item_idcateitem = idcateitem_db
 		obj.Item_nmcateitem = nmcateitem_db
 		obj.Item_iduom = _Get_item_uom(iditem_db)
@@ -394,6 +531,62 @@ func Fetch_itemuom(iditem string) (helpers.Response, error) {
 
 	return res, nil
 }
+func Save_merek(admin, name, status, sData string, idrecord int) (helpers.Response, error) {
+	var res helpers.Response
+	msg := "Failed"
+	tglnow, _ := goment.New()
+	render_page := time.Now()
+
+	if sData == "New" {
+
+		sql_insert := `
+				insert into
+				` + database_merek_local + ` (
+					idmerek , nmmerek, statusmerek,  
+					createmerek, createdatemerek 
+				) values (
+					$1, $2, $3,   
+					$4, $5 
+				)
+			`
+		field_column := database_merek_local + tglnow.Format("YYYY")
+		idrecord_counter := Get_counter(field_column)
+		flag_insert, msg_insert := Exec_SQL(sql_insert, database_merek_local, "INSERT",
+			tglnow.Format("YY")+strconv.Itoa(idrecord_counter), name, status,
+			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
+
+		if flag_insert {
+			msg = "Succes"
+		} else {
+			fmt.Println(msg_insert)
+		}
+	} else {
+		sql_update := `
+				UPDATE 
+				` + database_merek_local + `  
+				SET nmmerek=$1, statusmerek=$2,  
+				updatemerek=$3, updatedatemerek=$4    
+				WHERE idmerek=$5   
+			`
+
+		flag_update, msg_update := Exec_SQL(sql_update, database_merek_local, "UPDATE",
+			name, status,
+			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
+
+		if flag_update {
+			msg = "Succes"
+		} else {
+			fmt.Println(msg_update)
+		}
+	}
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = nil
+	res.Time = time.Since(render_page).String()
+
+	return res, nil
+}
 func Save_cateitem(admin, name, status, sData string, idrecord int) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
@@ -450,7 +643,7 @@ func Save_cateitem(admin, name, status, sData string, idrecord int) (helpers.Res
 
 	return res, nil
 }
-func Save_item(admin, idrecord, iduom, name, descp, urlimgitem, inventory, sales, purchase, status, sData string, idcateitem int) (helpers.Response, error) {
+func Save_item(admin, idrecord, iduom, name, descp, urlimgitem, inventory, sales, purchase, status, sData string, idcateitem, idmerek int) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
 	tglnow, _ := goment.New()
@@ -460,20 +653,20 @@ func Save_item(admin, idrecord, iduom, name, descp, urlimgitem, inventory, sales
 		sql_insert := `
 				insert into
 				` + database_item_local + ` (
-					iditem , idcateitem, nmitem,  
+					iditem , idmerek, idcateitem, nmitem,  
 					descpitem , urlimgitem, inventory_item, sales_item, purchase_item, statusitem,
 					createitem, createdateitem 
 				) values (
-					$1, $2, $3,   
-					$4, $5, $6, $7, $8, $9,   
-					$10, $11 
+					$1, $2, $3, $4,  
+					$5, $6, $7, $8, $9, $10,   
+					$11, $12 
 				)
 			`
 		field_column := database_item_local + tglnow.Format("YYYY")
 		idrecord_counter := Get_counter(field_column)
 		idrecord := "ITEM_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
 		flag_insert, msg_insert := Exec_SQL(sql_insert, database_item_local, "INSERT",
-			idrecord, idcateitem, name,
+			idrecord, idmerek, idcateitem, name,
 			descp, urlimgitem, inventory, sales, purchase, status,
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
@@ -512,14 +705,14 @@ func Save_item(admin, idrecord, iduom, name, descp, urlimgitem, inventory, sales
 		sql_update := `
 				UPDATE 
 				` + database_item_local + `  
-				SET idcateitem=$1, nmitem=$2,  
-				descpitem=$3, urlimgitem=$4 ,inventory_item=$5, sales_item=$6, purchase_item=$7, statusitem=$8,
-				updateitem=$9, updatedateitem=$10     
-				WHERE iditem=$11    
+				SET idmerek=$1, idcateitem=$2, nmitem=$3,  
+				descpitem=$4, urlimgitem=$5, inventory_item=$6, sales_item=$7, purchase_item=$8, statusitem=$9,
+				updateitem=$10, updatedateitem=$11      
+				WHERE iditem=$12     
 			`
 
 		flag_update, msg_update := Exec_SQL(sql_update, database_item_local, "UPDATE",
-			idcateitem, name, descp, urlimgitem, inventory, sales, purchase, status,
+			idmerek, idcateitem, name, descp, urlimgitem, inventory, sales, purchase, status,
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
 
 		if flag_update {
@@ -718,6 +911,26 @@ func _reset_itemuom(admin, iditem string) bool {
 	}
 
 	return flag
+}
+func _Get_merek(idmerek int) string {
+	con := db.CreateCon()
+	ctx := context.Background()
+	nmmerek := ""
+	sql_select := `SELECT
+			nmmerek    
+			FROM ` + database_merek_local + `  
+			WHERE idmerek='` + strconv.Itoa(idmerek) + `'       
+		`
+
+	row := con.QueryRowContext(ctx, sql_select)
+	switch e := row.Scan(&nmmerek); e {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e)
+	}
+
+	return nmmerek
 }
 func _Get_item_uom(iditem string) string {
 	con := db.CreateCon()

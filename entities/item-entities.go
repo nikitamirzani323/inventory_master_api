@@ -1,5 +1,17 @@
 package entities
 
+type Model_merek struct {
+	Merek_id         int    `json:"merek_id"`
+	Merek_name       string `json:"merek_name"`
+	Merek_status     string `json:"merek_status"`
+	Merek_status_css string `json:"merek_status_css"`
+	Merek_create     string `json:"merek_create"`
+	Merek_update     string `json:"merek_update"`
+}
+type Model_merekshare struct {
+	Merek_id   int    `json:"merek_id"`
+	Merek_name string `json:"merek_name"`
+}
 type Model_cateitem struct {
 	Cateitem_id         int    `json:"cateitem_id"`
 	Cateitem_name       string `json:"cateitem_name"`
@@ -14,6 +26,8 @@ type Model_cateitemshare struct {
 }
 type Model_item struct {
 	Item_id            string `json:"item_id"`
+	Item_idmerek       int    `json:"item_idmerek"`
+	Item_nmmerek       string `json:"item_nmmerek"`
 	Item_idcateitem    int    `json:"item_idcateitem"`
 	Item_nmcateitem    string `json:"item_nmcateitem"`
 	Item_iduom         string `json:"item_iduom"`
@@ -52,6 +66,15 @@ type Model_itemuom struct {
 type Model_itemuomshare struct {
 	Itemuom_iduom string `json:"itemuom_iduom"`
 }
+type Controller_mereksave struct {
+	Page         string `json:"page" validate:"required"`
+	Sdata        string `json:"sdata" validate:"required"`
+	Merek_search string `json:"merek_search"`
+	Merek_page   int    `json:"merek_page"`
+	Merek_id     int    `json:"merek_id"`
+	Merek_name   string `json:"merek_name" validate:"required"`
+	Merek_status string `json:"merek_status" validate:"required"`
+}
 type Controller_cateitemsave struct {
 	Page            string `json:"page" validate:"required"`
 	Sdata           string `json:"sdata" validate:"required"`
@@ -67,6 +90,7 @@ type Controller_itemsave struct {
 	Item_search     string `json:"item_search"`
 	Item_page       int    `json:"item_page"`
 	Item_id         string `json:"item_id"`
+	Item_idmerek    int    `json:"item_idmerek"  validate:"required"`
 	Item_idcateitem int    `json:"item_idcateitem"  validate:"required"`
 	Item_iduom      string `json:"item_iduom"  `
 	Item_name       string `json:"item_name" validate:"required"`
@@ -103,6 +127,11 @@ type Controller_cateitem struct {
 	Cateitem_search string `json:"cateitem_search"`
 	Cateitem_page   int    `json:"cateitem_page"`
 }
+type Controller_merek struct {
+	Merek_search string `json:"merek_search"`
+	Merek_page   int    `json:"merek_page"`
+}
+
 type Controller_itemuom struct {
 	Item_id string `json:"item_id"`
 }

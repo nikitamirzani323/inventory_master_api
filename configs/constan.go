@@ -14,6 +14,7 @@ const (
 	DB_tbl_mst_employee               string = "tbl_mst_employee"
 	DB_tbl_mst_catevendor             string = "tbl_mst_catevendor"
 	DB_tbl_mst_vendor                 string = "tbl_mst_vendor"
+	DB_tbl_mst_merek                  string = "tbl_mst_merek"
 	DB_tbl_mst_categoryitem           string = "tbl_mst_categoryitem"
 	DB_tbl_mst_item                   string = "tbl_mst_item"
 	DB_tbl_mst_item_uom               string = "tbl_mst_item_uom"
