@@ -501,9 +501,12 @@ func Save_purchaserequestdetail(admin, idrecord, idpurchaserequest, iditem, nmit
 	msg := "Failed"
 	tglnow, _ := goment.New()
 	render_page := time.Now()
+	flag := false
 
 	if sData == "New" {
-		sql_insert := `
+		flag = CheckDBTwoField(database_purchaserequestdetail_local, "idpurchaserequest", idpurchaserequest, "iditem", iditem)
+		if !flag {
+			sql_insert := `
 				insert into
 				` + database_purchaserequestdetail_local + ` (
 					idpurchaserequestdetail, idpurchaserequest ,  
@@ -517,19 +520,22 @@ func Save_purchaserequestdetail(admin, idrecord, idpurchaserequest, iditem, nmit
 					$11, $12 
 				)
 			`
-		field_column := database_purchaserequestdetail_local + tglnow.Format("YYYY")
-		idrecord_counter := Get_counter(field_column)
-		idrecord := "PRDETAIL_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
-		flag_insert, msg_insert := Exec_SQL(sql_insert, database_purchaserequestdetail_local, "INSERT",
-			idrecord, idpurchaserequest,
-			iditem, nmitem, descpitem, purpose,
-			qty, iduom, estimateprice, status,
-			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
+			field_column := database_purchaserequestdetail_local + tglnow.Format("YYYY")
+			idrecord_counter := Get_counter(field_column)
+			idrecord := "PRDETAIL_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
+			flag_insert, msg_insert := Exec_SQL(sql_insert, database_purchaserequestdetail_local, "INSERT",
+				idrecord, idpurchaserequest,
+				iditem, nmitem, descpitem, purpose,
+				qty, iduom, estimateprice, status,
+				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
-		if flag_insert {
-			msg = "Succes"
+			if flag_insert {
+				msg = "Succes"
+			} else {
+				fmt.Println(msg_insert)
+			}
 		} else {
-			fmt.Println(msg_insert)
+			msg = "Duplicate Entry"
 		}
 	} else {
 		sql_update := `
