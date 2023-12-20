@@ -236,6 +236,54 @@ func Fetch_vendorHome(search string, page int) (helpers.Responsevendor, error) {
 
 	return res, nil
 }
+func Fetch_vendorShare(search string) (helpers.Response, error) {
+	var obj entities.Model_vendorshare
+	var arraobj []entities.Model_vendorshare
+	var res helpers.Response
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "A.idvendor ,B.nmcatevendor ,A.nmvendor "
+	sql_select += "FROM " + database_vendor_local + " as A   "
+	sql_select += "JOIN " + database_catevendor_local + " as B ON B.idcatevendor = A.idcatevendor   "
+	sql_select += "WHERE A.statusvendor='Y' "
+	if search == "" {
+		sql_select += "ORDER BY A.createdatevendor DESC   LIMIT " + strconv.Itoa(configs.PAGING_PAGE)
+	} else {
+		sql_select += "AND LOWER(A.nmvendor) LIKE '%" + strings.ToLower(search) + "%' "
+		sql_select += "ORDER BY A.createdatevendor DESC   LIMIT " + strconv.Itoa(configs.PAGING_PAGE)
+	}
+
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		var (
+			idvendor_db, nmcatevendor_db, nmvendor_db string
+		)
+
+		err = row.Scan(&idvendor_db, &nmcatevendor_db, &nmvendor_db)
+
+		helpers.ErrorCheck(err)
+
+		obj.Vendor_id = idvendor_db
+		obj.Vendor_nmcatevendor = nmcatevendor_db
+		obj.Vendor_name = nmvendor_db
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+	}
+	defer row.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = arraobj
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
 func Save_catevendor(admin, name, status, sData string, idrecord int) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"

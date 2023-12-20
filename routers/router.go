@@ -62,6 +62,7 @@ func Init() *fiber.App {
 	app.Post("/api/catevendor", middleware.JWTProtected(), controllers.Catevendorhome)
 	app.Post("/api/catevendorsave", middleware.JWTProtected(), controllers.CatevendorSave)
 	app.Post("/api/vendor", middleware.JWTProtected(), controllers.Vendorhome)
+	app.Post("/api/vendorshare", middleware.JWTProtected(), controllers.Vendorshare)
 	app.Post("/api/vendorsave", middleware.JWTProtected(), controllers.VendorSave)
 	app.Post("/api/curr", middleware.JWTProtected(), controllers.Currhome)
 	app.Post("/api/currsave", middleware.JWTProtected(), controllers.CurrSave)
@@ -93,6 +94,8 @@ func Init() *fiber.App {
 	app.Post("/api/purchaserequestdetail", middleware.JWTProtected(), controllers.Purchaserequestdetail)
 	app.Post("/api/purchaserequestsave", middleware.JWTProtected(), controllers.PurchaserequestSave)
 	app.Post("/api/purchaserequeststatussave", middleware.JWTProtected(), controllers.PurchaserequeststatusSave)
+	app.Post("/api/rfq", middleware.JWTProtected(), controllers.Rfqhome)
+	app.Post("/api/rfqsave", middleware.JWTProtected(), controllers.RfqSave)
 
 	return app
 }

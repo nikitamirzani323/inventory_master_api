@@ -206,6 +206,80 @@ func Vendorhome(c *fiber.Ctx) error {
 		})
 	}
 }
+func Vendorshare(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_vendor)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+	fmt.Println(client.Vendor_page)
+	if client.Vendor_search != "" {
+		val_pattern := helpers.DeleteRedis(Fieldvendor_home_redis + "_" + client.Vendor_search)
+		fmt.Printf("Redis Delete BACKEND VENDOR : %d", val_pattern)
+	}
+
+	var obj entities.Model_vendorshare
+	var arraobj []entities.Model_vendorshare
+	render_page := time.Now()
+	resultredis, flag := helpers.GetRedis(Fieldvendor_home_redis + "_" + client.Vendor_search)
+	jsonredis := []byte(resultredis)
+	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
+	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		vendor_id, _ := jsonparser.GetString(value, "vendor_id")
+		vendor_nmcatevendor, _ := jsonparser.GetString(value, "vendor_nmcatevendor")
+		vendor_name, _ := jsonparser.GetString(value, "vendor_name")
+
+		obj.Vendor_id = vendor_id
+		obj.Vendor_name = vendor_name
+		obj.Vendor_nmcatevendor = vendor_nmcatevendor
+		arraobj = append(arraobj, obj)
+	})
+
+	if !flag {
+		result, err := models.Fetch_vendorShare(client.Vendor_search)
+		if err != nil {
+			c.Status(fiber.StatusBadRequest)
+			return c.JSON(fiber.Map{
+				"status":  fiber.StatusBadRequest,
+				"message": err.Error(),
+				"record":  nil,
+			})
+		}
+		helpers.SetRedis(Fieldvendor_home_redis+"_"+client.Vendor_search, result, 60*time.Minute)
+		fmt.Println("VENDOR SHARE MYSQL")
+		return c.JSON(result)
+	} else {
+		fmt.Println("VENDOR SHARE CACHE")
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusOK,
+			"message": "Success",
+			"record":  arraobj,
+			"time":    time.Since(render_page).String(),
+		})
+	}
+}
 func CatevendorSave(c *fiber.Ctx) error {
 	var errors []*helpers.ErrorResponse
 	client := new(entities.Controller_catevendorsave)

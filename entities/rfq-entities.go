@@ -31,17 +31,18 @@ type Model_rfqdetail struct {
 }
 
 type Controller_rfqsave struct {
-	Page         string `json:"page" validate:"required"`
-	Sdata        string `json:"sdata" validate:"required"`
-	Rfq_search   string `json:"rfq_search"`
-	Rfq_page     int    `json:"rfq_page"`
-	Rfq_id       string `json:"rfq_id"`
-	Rfq_date     string `json:"rfq_date"`
-	Rfq_idbranch string `json:"rfq_idbranch" validate:"required"`
-	Rfq_idvendor string `json:"rfq_idvendor" validate:"required"`
-	Rfq_idcurr   string `json:"rfq_idcurr" validate:"required"`
-	Rfq_tipedoc  string `json:"rfq_tipedoc" validate:"required"`
-	Rfq_status   string `json:"rfq_status" validate:"required"`
+	Page           string  `json:"page" validate:"required"`
+	Sdata          string  `json:"sdata" validate:"required"`
+	Rfq_search     string  `json:"rfq_search"`
+	Rfq_page       int     `json:"rfq_page"`
+	Rfq_id         string  `json:"rfq_id"`
+	Rfq_idbranch   string  `json:"rfq_idbranch" validate:"required"`
+	Rfq_idvendor   string  `json:"rfq_idvendor" validate:"required"`
+	Rfq_idcurr     string  `json:"rfq_idcurr" validate:"required"`
+	Rfq_tipedoc    string  `json:"rfq_tipedoc" validate:"required"`
+	Rfq_listdetail string  `json:"rfq_listdetail" validate:"required"`
+	Rfq_totalitem  float32 `json:"rfq_totalitem" validate:"required"`
+	Rfq_subtotal   float32 `json:"rfq_subtotal" validate:"required"`
 }
 type Controller_rfqdetailsave struct {
 	Page                              string  `json:"page" validate:"required"`
