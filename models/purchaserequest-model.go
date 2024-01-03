@@ -19,6 +19,7 @@ import (
 
 const database_purchaserequest_local = configs.DB_tbl_trx_purchaserequest
 const database_purchaserequestdetail_local = configs.DB_tbl_trx_purchaserequest_detail
+const database_prdetail_view_local = configs.DB_view_tbl_pr
 
 func Fetch_purchaserequestHome(search string, page int) (helpers.Responsepurchaserequest, error) {
 	var obj entities.Model_purchaserequest
@@ -281,6 +282,84 @@ func Fetch_purchaserequestDetail(idpurchaserequest string) (helpers.Response, er
 		obj.Purchaserequestdetail_status_css = status_css
 		obj.Purchaserequestdetail_create = create
 		obj.Purchaserequestdetail_update = update
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+	}
+	defer row.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = arraobj
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
+func Fetch_prdetail_view(idbranch, tipedoc string) (helpers.Response, error) {
+	var obj entities.Model_prdetail_view
+	var arraobj []entities.Model_prdetail_view
+	var res helpers.Response
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "idpurchaserequestdetail, idpurchaserequest,  "
+	sql_select += "to_char(COALESCE(createdatepurchaserequest,now()), 'YYYY-MM-DD HH24:MI:SS'), "
+	sql_select += "tipe_document, nmbranch, nmdepartement, idemployee, nmemployee,  "
+	sql_select += "idcurr, iditem, nmitem, descitem,purpose,  "
+	sql_select += "qty, qty_po, iduom, estimateprice, statuspurchaserequest  "
+	sql_select += "FROM " + database_prdetail_view_local + "   "
+	sql_select += "WHERE tipe_document='" + tipedoc + "' "
+	sql_select += "AND idbranch='" + idbranch + "' "
+	sql_select += "ORDER BY createdatepurchaserequest ASC   "
+
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		var (
+			idpurchaserequestdetail_db, idpurchaserequest_db, createdatepurchaserequest_db               string
+			tipe_document_db, nmbranch_db, nmdepartement_db, idemployee_db, nmemployee_db                string
+			idcurr_db, iditem_db, nmitem_db, descitem_db, purpose_db, iduom_db, statuspurchaserequest_db string
+			qty_db, qty_po_db, estimateprice_db                                                          float64
+		)
+
+		err = row.Scan(&idpurchaserequestdetail_db, &idpurchaserequest_db, &createdatepurchaserequest_db,
+			&tipe_document_db, &nmbranch_db, &nmdepartement_db, &idemployee_db, &nmemployee_db,
+			&idcurr_db, &iditem_db, &nmitem_db, &descitem_db, &purpose_db,
+			&qty_db, &qty_po_db, &iduom_db, &estimateprice_db, &statuspurchaserequest_db)
+		helpers.ErrorCheck(err)
+		status_css := configs.STATUS_CANCEL
+		switch statuspurchaserequest_db {
+		case "OPEN":
+			status_css = configs.STATUS_NEW2
+		case "PROCESS":
+			status_css = configs.STATUS_RUNNING
+		case "COMPLETE":
+			status_css = configs.STATUS_COMPLETE
+		case "CANCEL":
+			status_css = configs.STATUS_CANCEL
+		}
+
+		obj.Prdetailview_id = idpurchaserequestdetail_db
+		obj.Prdetailview_idpurchaserequest = idpurchaserequest_db
+		obj.Prdetailview_date = createdatepurchaserequest_db
+		obj.Prdetailview_tipedoc = tipe_document_db
+		obj.Prdetailview_nmbranch = nmbranch_db
+		obj.Prdetailview_nmdepartement = nmdepartement_db
+		obj.Prdetailview_nmemployee = idemployee_db + " - " + nmemployee_db
+		obj.Prdetailview_idcurr = idcurr_db
+		obj.Prdetailview_iditem = iditem_db
+		obj.Prdetailview_nmitem = nmitem_db
+		obj.Prdetailview_descitem = descitem_db
+		obj.Prdetailview_purpose = purpose_db
+		obj.Prdetailview_iduom = iduom_db
+		obj.Prdetailview_qty = float32(qty_db)
+		obj.Prdetailview_qty_po = float32(qty_po_db)
+		obj.Prdetailview_price = float32(estimateprice_db)
+		obj.Prdetailview_status = statuspurchaserequest_db
+		obj.Prdetailview_status_css = status_css
 		arraobj = append(arraobj, obj)
 		msg = "Success"
 	}

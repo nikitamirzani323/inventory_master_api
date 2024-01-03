@@ -1,18 +1,20 @@
 package entities
 
 type Model_rfq struct {
-	Rfq_id         string `json:"rfq_id"`
-	Rfq_date       string `json:"rfq_date"`
-	Rfq_idbranch   string `json:"rfq_idbranch"`
-	Rfq_idvendor   string `json:"rfq_idvendor"`
-	Rfq_idcurr     string `json:"rfq_idcurr"`
-	Rfq_tipedoc    string `json:"rfq_tipedoc"`
-	Rfq_nmbranch   string `json:"rfq_nmbranch"`
-	Rfq_nmvendor   string `json:"rfq_nmvendor"`
-	Rfq_status     string `json:"rfq_status"`
-	Rfq_status_css string `json:"rfq_status_css"`
-	Rfq_create     string `json:"rfq_create"`
-	Rfq_update     string `json:"rfq_update"`
+	Rfq_id         string  `json:"rfq_id"`
+	Rfq_date       string  `json:"rfq_date"`
+	Rfq_idbranch   string  `json:"rfq_idbranch"`
+	Rfq_idvendor   string  `json:"rfq_idvendor"`
+	Rfq_idcurr     string  `json:"rfq_idcurr"`
+	Rfq_tipedoc    string  `json:"rfq_tipedoc"`
+	Rfq_nmbranch   string  `json:"rfq_nmbranch"`
+	Rfq_nmvendor   string  `json:"rfq_nmvendor"`
+	Rfq_totalitem  float64 `json:"rfq_totalitem"`
+	Rfq_totalrfq   float64 `json:"rfq_totalrfq"`
+	Rfq_status     string  `json:"rfq_status"`
+	Rfq_status_css string  `json:"rfq_status_css"`
+	Rfq_create     string  `json:"rfq_create"`
+	Rfq_update     string  `json:"rfq_update"`
 }
 type Model_rfqdetail struct {
 	Rfqdetail_id                      string  `json:"rfqdetail_id"`

@@ -37,6 +37,26 @@ type Model_purchaserequestdetail struct {
 	Purchaserequestdetail_create            string  `json:"purchaserequestdetail_create"`
 	Purchaserequestdetail_update            string  `json:"purchaserequestdetail_update"`
 }
+type Model_prdetail_view struct {
+	Prdetailview_id                string  `json:"prdetailview_id"`
+	Prdetailview_idpurchaserequest string  `json:"prdetailview_idpurchaserequest"`
+	Prdetailview_date              string  `json:"prdetailview_date"`
+	Prdetailview_tipedoc           string  `json:"prdetailview_tipedoc"`
+	Prdetailview_nmbranch          string  `json:"prdetailview_nmbranch"`
+	Prdetailview_nmdepartement     string  `json:"prdetailview_nmdepartement"`
+	Prdetailview_nmemployee        string  `json:"prdetailview_nmemployee"`
+	Prdetailview_idcurr            string  `json:"prdetailview_idcurr"`
+	Prdetailview_iditem            string  `json:"prdetailview_iditem"`
+	Prdetailview_nmitem            string  `json:"prdetailview_nmitem"`
+	Prdetailview_descitem          string  `json:"prdetailview_descitem"`
+	Prdetailview_purpose           string  `json:"prdetailview_purpose"`
+	Prdetailview_qty               float32 `json:"prdetailview_qty"`
+	Prdetailview_qty_po            float32 `json:"prdetailview_qty_po"`
+	Prdetailview_iduom             string  `json:"prdetailview_iduom"`
+	Prdetailview_price             float32 `json:"prdetailview_price"`
+	Prdetailview_status            string  `json:"prdetailview_status"`
+	Prdetailview_status_css        string  `json:"prdetailview_status_css"`
+}
 
 type Controller_purchaserequestsave struct {
 	Page                          string  `json:"page" validate:"required"`
@@ -76,6 +96,10 @@ type Controller_purchaserequest struct {
 }
 type Controller_purchaserequestdetail struct {
 	Purchaserequest_id string `json:"purchaserequest_id" validate:"required"`
+}
+type Controller_prdetail_view struct {
+	Purchaserequest_tipedoc  string `json:"purchaserequest_tipedoc" validate:"required"`
+	Purchaserequest_idbranch string `json:"purchaserequest_idbranch" validate:"required"`
 }
 type Controller_purchaserequeststatus struct {
 	Purchaserequest_id     string `json:"purchaserequest_id" validate:"required"`

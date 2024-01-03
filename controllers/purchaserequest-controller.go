@@ -250,6 +250,104 @@ func Purchaserequestdetail(c *fiber.Ctx) error {
 		})
 	}
 }
+func Purchaserequestdetailview(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_prdetail_view)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+
+	var obj entities.Model_prdetail_view
+	var arraobj []entities.Model_prdetail_view
+	render_page := time.Now()
+	resultredis, flag := helpers.GetRedis(Fieldpurchaserequest_home_redis + "_" + client.Purchaserequest_tipedoc + "_" + client.Purchaserequest_idbranch)
+	jsonredis := []byte(resultredis)
+	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
+	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		prdetailview_id, _ := jsonparser.GetString(value, "prdetailview_id")
+		prdetailview_idpurchaserequest, _ := jsonparser.GetString(value, "prdetailview_idpurchaserequest")
+		prdetailview_date, _ := jsonparser.GetString(value, "prdetailview_date")
+		prdetailview_tipedoc, _ := jsonparser.GetString(value, "prdetailview_tipedoc")
+		prdetailview_nmbranch, _ := jsonparser.GetString(value, "prdetailview_nmbranch")
+		prdetailview_nmdepartement, _ := jsonparser.GetString(value, "prdetailview_nmdepartement")
+		prdetailview_nmemployee, _ := jsonparser.GetString(value, "prdetailview_nmemployee")
+		prdetailview_iditem, _ := jsonparser.GetString(value, "prdetailview_iditem")
+		prdetailview_nmitem, _ := jsonparser.GetString(value, "prdetailview_nmitem")
+		prdetailview_descitem, _ := jsonparser.GetString(value, "prdetailview_descitem")
+		prdetailview_purpose, _ := jsonparser.GetString(value, "prdetailview_purpose")
+		prdetailview_qty, _ := jsonparser.GetFloat(value, "prdetailview_qty")
+		prdetailview_qty_po, _ := jsonparser.GetFloat(value, "prdetailview_qty_po")
+		prdetailview_iduom, _ := jsonparser.GetString(value, "prdetailview_iduom")
+		prdetailview_price, _ := jsonparser.GetFloat(value, "prdetailview_price")
+		prdetailview_status, _ := jsonparser.GetString(value, "prdetailview_status")
+		prdetailview_status_css, _ := jsonparser.GetString(value, "prdetailview_status_css")
+
+		obj.Prdetailview_id = prdetailview_id
+		obj.Prdetailview_idpurchaserequest = prdetailview_idpurchaserequest
+		obj.Prdetailview_date = prdetailview_date
+		obj.Prdetailview_tipedoc = prdetailview_tipedoc
+		obj.Prdetailview_nmbranch = prdetailview_nmbranch
+		obj.Prdetailview_nmdepartement = prdetailview_nmdepartement
+		obj.Prdetailview_nmemployee = prdetailview_nmemployee
+		obj.Prdetailview_iditem = prdetailview_iditem
+		obj.Prdetailview_nmitem = prdetailview_nmitem
+		obj.Prdetailview_descitem = prdetailview_descitem
+		obj.Prdetailview_purpose = prdetailview_purpose
+		obj.Prdetailview_qty = float32(prdetailview_qty)
+		obj.Prdetailview_qty_po = float32(prdetailview_qty_po)
+		obj.Prdetailview_iduom = prdetailview_iduom
+		obj.Prdetailview_price = float32(prdetailview_price)
+		obj.Prdetailview_status = prdetailview_status
+		obj.Prdetailview_status_css = prdetailview_status_css
+
+		arraobj = append(arraobj, obj)
+	})
+
+	if !flag {
+		result, err := models.Fetch_prdetail_view(client.Purchaserequest_idbranch, client.Purchaserequest_tipedoc)
+		if err != nil {
+			c.Status(fiber.StatusBadRequest)
+			return c.JSON(fiber.Map{
+				"status":  fiber.StatusBadRequest,
+				"message": err.Error(),
+				"record":  nil,
+			})
+		}
+		helpers.SetRedis(Fieldpurchaserequest_home_redis+"_"+client.Purchaserequest_tipedoc+"_"+client.Purchaserequest_idbranch, result, 60*time.Minute)
+		fmt.Println("PURCHASE REQUEST DETAIL VIEW MYSQL")
+		return c.JSON(result)
+	} else {
+		fmt.Println("PURCHASE REQUEST DETAIL VIEW CACHE")
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusOK,
+			"message": "Success",
+			"record":  arraobj,
+			"time":    time.Since(render_page).String(),
+		})
+	}
+}
 func PurchaserequestSave(c *fiber.Ctx) error {
 	var errors []*helpers.ErrorResponse
 	client := new(entities.Controller_purchaserequestsave)

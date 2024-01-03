@@ -56,6 +56,7 @@ func Fetch_rfqHome(search string, page int) (helpers.Responserfq, error) {
 	sql_select += "SELECT "
 	sql_select += "A.idrfq, A.idbranch, B.nmbranch, A.idvendor, C.nmvendor, "
 	sql_select += "A.idcurr, A.tipe_documentrfq, A.statusrfq,   "
+	sql_select += "A.rfq_total_item, A.rfq_total_rfq,    "
 	sql_select += "A.createrfq, to_char(COALESCE(A.createdaterfq,now()), 'YYYY-MM-DD HH24:MI:SS'), "
 	sql_select += "A.updaterfq, to_char(COALESCE(A.updatedaterfq,now()), 'YYYY-MM-DD HH24:MI:SS')  "
 	sql_select += "FROM " + database_rfq_local + " as A   "
@@ -75,11 +76,13 @@ func Fetch_rfqHome(search string, page int) (helpers.Responserfq, error) {
 		var (
 			idrfq_db, idbranch_db, nmbranch_db, idvendor_db, nmvendor_db   string
 			idcurr_db, tipe_documentrfq_db, statusrfq_db                   string
+			rfq_total_item_db, rfq_total_rfq_db                            float64
 			createrfq_db, createdaterfq_db, updaterfq_db, updatedaterfq_db string
 		)
 
 		err = row.Scan(&idrfq_db, &idbranch_db, &nmbranch_db, &idvendor_db, &nmvendor_db,
 			&idcurr_db, &tipe_documentrfq_db, &statusrfq_db,
+			&rfq_total_item_db, &rfq_total_rfq_db,
 			&createrfq_db, &createdaterfq_db, &updaterfq_db, &updatedaterfq_db)
 
 		helpers.ErrorCheck(err)
@@ -111,6 +114,8 @@ func Fetch_rfqHome(search string, page int) (helpers.Responserfq, error) {
 		obj.Rfq_nmbranch = nmbranch_db
 		obj.Rfq_nmvendor = nmvendor_db
 		obj.Rfq_tipedoc = tipe_documentrfq_db
+		obj.Rfq_totalitem = rfq_total_item_db
+		obj.Rfq_totalrfq = rfq_total_rfq_db
 		obj.Rfq_status = statusrfq_db
 		obj.Rfq_status_css = status_css
 		obj.Rfq_create = create
@@ -269,12 +274,12 @@ func Save_rfq(admin, idrecord, idbranch, idvendor, idcurr, tipedoc, listdetail, 
 				insert into
 				` + database_rfq_local + ` (
 					idrfq , idbranch, idvendor, idcurr,  
-					tipe_documentrfq , statuspurchaserequest,
-					createpurchaserequest, createdatepurchaserequest 
+					tipe_documentrfq , statusrfq, rfq_total_item, rfq_total_rfq,
+					createrfq, createdaterfq 
 				) values (
 					$1, $2, $3, $4,     
-					$5, $6,
-					$7, $8  
+					$5, $6, $7, $8, 
+					$9, $10  
 				)
 			`
 
@@ -284,7 +289,7 @@ func Save_rfq(admin, idrecord, idbranch, idvendor, idcurr, tipedoc, listdetail, 
 		start_date := tglnow.Format("YYYY-MM-DD HH:mm:ss")
 		flag_insert, msg_insert := Exec_SQL(sql_insert, database_rfq_local, "INSERT",
 			idrecord, idbranch, idvendor, idcurr,
-			tipedoc, "OPEN",
+			tipedoc, "OPEN", total_item, subtotalpr,
 			admin, start_date)
 
 		if flag_insert {
@@ -292,8 +297,8 @@ func Save_rfq(admin, idrecord, idbranch, idvendor, idcurr, tipedoc, listdetail, 
 
 			json := []byte(listdetail)
 			jsonparser.ArrayEach(json, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-				detail_prdetail, _ := jsonparser.GetString(value, "detail_prdetail")
-				detail_pr, _ := jsonparser.GetString(value, "detail_pr")
+				detail_id, _ := jsonparser.GetString(value, "detail_id")
+				detail_document, _ := jsonparser.GetString(value, "detail_document")
 				detail_iditem, _ := jsonparser.GetString(value, "detail_iditem")
 				detail_nmitem, _ := jsonparser.GetString(value, "detail_nmitem")
 				detail_descpitem, _ := jsonparser.GetString(value, "detail_descpitem")
@@ -303,7 +308,7 @@ func Save_rfq(admin, idrecord, idbranch, idvendor, idcurr, tipedoc, listdetail, 
 
 				//admin, idrecord, idrfq, idpurchaserequestdetail, idpurchaserequest, iditem, nmitem, descpitem, iduom, status, sData string, qty, price float64
 				Save_rfqdetail(admin, "", idrecord,
-					detail_prdetail, detail_pr,
+					detail_id, detail_document,
 					detail_iditem, detail_nmitem, detail_descpitem, detail_iduom,
 					"OPEN", "New", detail_qty, detail_price)
 			})

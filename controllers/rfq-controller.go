@@ -73,6 +73,8 @@ func Rfqhome(c *fiber.Ctx) error {
 		rfq_tipedoc, _ := jsonparser.GetString(value, "rfq_tipedoc")
 		rfq_nmbranch, _ := jsonparser.GetString(value, "rfq_nmbranch")
 		rfq_nmvendor, _ := jsonparser.GetString(value, "rfq_nmvendor")
+		rfq_totalitem, _ := jsonparser.GetFloat(value, "rfq_totalitem")
+		rfq_totalrfq, _ := jsonparser.GetFloat(value, "rfq_totalrfq")
 		rfq_status, _ := jsonparser.GetString(value, "rfq_status")
 		rfq_status_css, _ := jsonparser.GetString(value, "rfq_status_css")
 		rfq_create, _ := jsonparser.GetString(value, "rfq_create")
@@ -86,6 +88,8 @@ func Rfqhome(c *fiber.Ctx) error {
 		obj.Rfq_tipedoc = rfq_tipedoc
 		obj.Rfq_nmbranch = rfq_nmbranch
 		obj.Rfq_nmvendor = rfq_nmvendor
+		obj.Rfq_totalitem = float64(rfq_totalitem)
+		obj.Rfq_totalrfq = float64(rfq_totalrfq)
 		obj.Rfq_status = rfq_status
 		obj.Rfq_status_css = rfq_status_css
 		obj.Rfq_create = rfq_create

@@ -23,6 +23,7 @@ const (
 	DB_tbl_trx_rfq                    string = "tbl_trx_rfq"
 	DB_tbl_trx_rfq_detail             string = "tbl_trx_rfq_detail"
 	DB_view_tbl_item_purchase         string = "view_tbl_item_purchase"
+	DB_view_tbl_pr                    string = "view_tbl_pr"
 
 	PAGING_PAGE     int    = 50
 	STATUS_NEW      string = "background:#0dcaf0;font-weight:bold;color:black;"
