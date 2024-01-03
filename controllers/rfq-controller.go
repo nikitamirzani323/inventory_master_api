@@ -279,7 +279,7 @@ func RfqSave(c *fiber.Ctx) error {
 		})
 	}
 
-	_deleteredis_rfq(client.Rfq_search, "", client.Rfq_page)
+	_deleteredis_rfq(client.Rfq_search, client.Rfq_id, client.Rfq_page)
 	return c.JSON(result)
 }
 func RfqstatusSave(c *fiber.Ctx) error {

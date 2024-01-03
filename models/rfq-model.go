@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -323,6 +324,97 @@ func Save_rfq(admin, idrecord, idbranch, idvendor, idcurr, tipedoc, listdetail, 
 		} else {
 			fmt.Println(msg_insert)
 		}
+	} else {
+		_, totaldetail_db := _Get_info_rfq(idrecord)
+		log.Println("total : ", totaldetail_db)
+		log.Println("data : ", listdetail)
+		if totaldetail_db > 0 {
+			sql_delete := `
+				DELETE FROM  
+				` + database_rfqdetail_local + `   
+				WHERE idrfq=$1  
+			`
+
+			flag_delete, msg_delete := Exec_SQL(sql_delete, database_rfqdetail_local, "DELETE", idrecord)
+
+			if flag_delete {
+				msg = "Succes"
+				//UPDATE
+				sql_update := `
+					UPDATE 
+					` + database_rfq_local + `  
+					SET rfq_total_item=$1, rfq_total_rfq=$2,   
+					updaterfq=$3, updatedaterfq=$4         
+					WHERE idrfq=$5       
+				`
+
+				flag_update, msg_update := Exec_SQL(sql_update, database_rfq_local, "UPDATE",
+					total_item, subtotalpr,
+					admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
+
+				if flag_update {
+					msg = "Succes"
+
+					json := []byte(listdetail)
+					jsonparser.ArrayEach(json, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+						detail_id, _ := jsonparser.GetString(value, "detail_id")
+						detail_document, _ := jsonparser.GetString(value, "detail_document")
+						detail_iditem, _ := jsonparser.GetString(value, "detail_iditem")
+						detail_nmitem, _ := jsonparser.GetString(value, "detail_nmitem")
+						detail_descpitem, _ := jsonparser.GetString(value, "detail_descpitem")
+						detail_iduom, _ := jsonparser.GetString(value, "detail_iduom")
+						detail_qty, _ := jsonparser.GetFloat(value, "detail_qty")
+						detail_price, _ := jsonparser.GetFloat(value, "detail_price")
+
+						//admin, idrecord, idrfq, idpurchaserequestdetail, idpurchaserequest, iditem, nmitem, descpitem, iduom, status, sData string, qty, price float64
+						Save_rfqdetail(admin, "", idrecord,
+							detail_id, detail_document,
+							detail_iditem, detail_nmitem, detail_descpitem, detail_iduom,
+							"OPEN", "New", detail_qty, detail_price)
+					})
+				} else {
+					fmt.Println(msg_update)
+				}
+			} else {
+				fmt.Println(msg_delete)
+			}
+		} else {
+			sql_update := `
+					UPDATE 
+					` + database_rfq_local + `  
+					SET rfq_total_item=$1, rfq_total_rfq=$2,   
+					updaterfq=$3, updatedaterfq=$4         
+					WHERE idrfq=$5       
+				`
+
+			flag_update, msg_update := Exec_SQL(sql_update, database_purchaserequest_local, "UPDATE",
+				total_item, subtotalpr,
+				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
+
+			if flag_update {
+				msg = "Succes"
+
+				json := []byte(listdetail)
+				jsonparser.ArrayEach(json, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+					detail_id, _ := jsonparser.GetString(value, "detail_id")
+					detail_document, _ := jsonparser.GetString(value, "detail_document")
+					detail_iditem, _ := jsonparser.GetString(value, "detail_iditem")
+					detail_nmitem, _ := jsonparser.GetString(value, "detail_nmitem")
+					detail_descpitem, _ := jsonparser.GetString(value, "detail_descpitem")
+					detail_iduom, _ := jsonparser.GetString(value, "detail_iduom")
+					detail_qty, _ := jsonparser.GetFloat(value, "detail_qty")
+					detail_price, _ := jsonparser.GetFloat(value, "detail_price")
+
+					//admin, idrecord, idrfq, idpurchaserequestdetail, idpurchaserequest, iditem, nmitem, descpitem, iduom, status, sData string, qty, price float64
+					Save_rfqdetail(admin, "", idrecord,
+						detail_id, detail_document,
+						detail_iditem, detail_nmitem, detail_descpitem, detail_iduom,
+						"OPEN", "New", detail_qty, detail_price)
+				})
+			} else {
+				fmt.Println(msg_update)
+			}
+		}
 	}
 
 	res.Status = fiber.StatusOK
@@ -379,6 +471,44 @@ func Save_rfqStatus(admin, idrecord, status string) (helpers.Response, error) {
 				fmt.Println(msg_update)
 			}
 		}
+	} else if status_db == "PROCESS" {
+		if status == "CANCEL" {
+			sql_update := `
+				UPDATE 
+				` + database_rfq_local + `  
+				SET statusrfq=$1, 
+				updaterfq=$2, updatedaterfq=$3     
+				WHERE idrfq=$4    
+			`
+
+			flag_update, msg_update := Exec_SQL(sql_update, database_rfq_local, "UPDATE",
+				"CANCEL",
+				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
+
+			if flag_update {
+				msg = "Succes"
+				//DETAIL
+				sql_updatedetail := `
+					UPDATE 
+					` + database_rfqdetail_local + `  
+					SET statusrfqdetail=$1, 
+					updaterfqdetaildetail=$2, updatedaterfqdetail=$3     
+					WHERE idrfq=$4    
+				`
+
+				flag_updatedetail, msg_updatedetail := Exec_SQL(sql_updatedetail, database_rfqdetail_local, "UPDATE",
+					"CANCEL",
+					admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
+
+				if flag_updatedetail {
+					msg = "Succes"
+				} else {
+					fmt.Println(msg_updatedetail)
+				}
+			} else {
+				fmt.Println(msg_update)
+			}
+		}
 	}
 
 	res.Status = fiber.StatusOK
@@ -396,7 +526,7 @@ func Save_rfqdetail(admin, idrecord, idrfq, idpurchaserequestdetail, idpurchaser
 	flag := false
 
 	if sData == "New" {
-		flag = CheckDBTwoField(database_rfqdetail_local, "idpurchaserequest", idpurchaserequest, "iditem", iditem)
+		flag = CheckDBTwoField(database_rfqdetail_local, "idrfq", idrfq, "idpurchaserequestdetail", idpurchaserequestdetail)
 		if !flag {
 			sql_insert := `
 				insert into
