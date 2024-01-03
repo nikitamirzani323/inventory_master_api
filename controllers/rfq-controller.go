@@ -139,7 +139,7 @@ func Rfqhome(c *fiber.Ctx) error {
 }
 func Rfqdetail(c *fiber.Ctx) error {
 	var errors []*helpers.ErrorResponse
-	client := new(entities.Controller_purchaserequestdetail)
+	client := new(entities.Controller_rfqdetail)
 	validate := validator.New()
 	if err := c.BodyParser(client); err != nil {
 		c.Status(fiber.StatusBadRequest)
@@ -166,45 +166,49 @@ func Rfqdetail(c *fiber.Ctx) error {
 		})
 	}
 
-	var obj entities.Model_purchaserequestdetail
-	var arraobj []entities.Model_purchaserequestdetail
+	var obj entities.Model_rfqdetail
+	var arraobj []entities.Model_rfqdetail
 	render_page := time.Now()
-	resultredis, flag := helpers.GetRedis(Fieldpurchaserequest_home_redis + "_" + client.Purchaserequest_id)
+	resultredis, flag := helpers.GetRedis(Fieldrfq_home_redis + "_" + client.Rfq_id)
 	jsonredis := []byte(resultredis)
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		purchaserequestdetail_id, _ := jsonparser.GetString(value, "purchaserequestdetail_id")
-		purchaserequestdetail_idpurchaserequest, _ := jsonparser.GetString(value, "purchaserequestdetail_idpurchaserequest")
-		purchaserequestdetail_iditem, _ := jsonparser.GetString(value, "purchaserequestdetail_iditem")
-		purchaserequestdetail_nmitem, _ := jsonparser.GetString(value, "purchaserequestdetail_nmitem")
-		purchaserequestdetail_descitem, _ := jsonparser.GetString(value, "purchaserequestdetail_descitem")
-		purchaserequestdetail_purpose, _ := jsonparser.GetString(value, "purchaserequestdetail_purpose")
-		purchaserequestdetail_qty, _ := jsonparser.GetFloat(value, "purchaserequestdetail_qty")
-		purchaserequestdetail_iduom, _ := jsonparser.GetString(value, "purchaserequestdetail_iduom")
-		purchaserequestdetail_price, _ := jsonparser.GetFloat(value, "purchaserequestdetail_price")
-		purchaserequestdetail_status, _ := jsonparser.GetString(value, "purchaserequestdetail_status")
-		purchaserequestdetail_status_css, _ := jsonparser.GetString(value, "purchaserequestdetail_status_css")
-		purchaserequestdetail_create, _ := jsonparser.GetString(value, "purchaserequestdetail_create")
-		purchaserequestdetail_update, _ := jsonparser.GetString(value, "purchaserequestdetail_update")
+		rfqdetail_id, _ := jsonparser.GetString(value, "rfqdetail_id")
+		rfqdetail_idpurchaserequestdetail, _ := jsonparser.GetString(value, "purchaserequestdetail_idpurchaserequest")
+		rfqdetail_idpurchaserequest, _ := jsonparser.GetString(value, "rfqdetail_idpurchaserequest")
+		rfqdetail_nmdepartement, _ := jsonparser.GetString(value, "rfqdetail_nmdepartement")
+		rfqdetail_nmemployee, _ := jsonparser.GetString(value, "rfqdetail_nmemployee")
+		rfqdetail_iditem, _ := jsonparser.GetString(value, "rfqdetail_iditem")
+		rfqdetail_nmitem, _ := jsonparser.GetString(value, "rfqdetail_nmitem")
+		rfqdetail_descitem, _ := jsonparser.GetString(value, "rfqdetail_descitem")
+		rfqdetail_qty, _ := jsonparser.GetFloat(value, "rfqdetail_qty")
+		rfqdetail_iduom, _ := jsonparser.GetString(value, "rfqdetail_iduom")
+		rfqdetail_price, _ := jsonparser.GetFloat(value, "rfqdetail_price")
+		rfqdetail_status, _ := jsonparser.GetString(value, "rfqdetail_status")
+		rfqdetail_status_css, _ := jsonparser.GetString(value, "rfqdetail_status_css")
+		rfqdetail_create, _ := jsonparser.GetString(value, "rfqdetail_create")
+		rfqdetail_update, _ := jsonparser.GetString(value, "rfqdetail_update")
 
-		obj.Purchaserequestdetail_id = purchaserequestdetail_id
-		obj.Purchaserequestdetail_idpurchaserequest = purchaserequestdetail_idpurchaserequest
-		obj.Purchaserequestdetail_iditem = purchaserequestdetail_iditem
-		obj.Purchaserequestdetail_nmitem = purchaserequestdetail_nmitem
-		obj.Purchaserequestdetail_descitem = purchaserequestdetail_descitem
-		obj.Purchaserequestdetail_purpose = purchaserequestdetail_purpose
-		obj.Purchaserequestdetail_qty = float32(purchaserequestdetail_qty)
-		obj.Purchaserequestdetail_iduom = purchaserequestdetail_iduom
-		obj.Purchaserequestdetail_price = float32(purchaserequestdetail_price)
-		obj.Purchaserequestdetail_status = purchaserequestdetail_status
-		obj.Purchaserequestdetail_status_css = purchaserequestdetail_status_css
-		obj.Purchaserequestdetail_create = purchaserequestdetail_create
-		obj.Purchaserequestdetail_update = purchaserequestdetail_update
+		obj.Rfqdetail_id = rfqdetail_id
+		obj.Rfqdetail_idpurchaserequestdetail = rfqdetail_idpurchaserequestdetail
+		obj.Rfqdetail_idpurchaserequest = rfqdetail_idpurchaserequest
+		obj.Rfqdetail_nmdepartement = rfqdetail_nmdepartement
+		obj.Rfqdetail_nmemployee = rfqdetail_nmemployee
+		obj.Rfqdetail_iditem = rfqdetail_iditem
+		obj.Rfqdetail_nmitem = rfqdetail_nmitem
+		obj.Rfqdetail_descitem = rfqdetail_descitem
+		obj.Rfqdetail_qty = float64(rfqdetail_qty)
+		obj.Rfqdetail_iduom = rfqdetail_iduom
+		obj.Rfqdetail_price = float64(rfqdetail_price)
+		obj.Rfqdetail_status = rfqdetail_status
+		obj.Rfqdetail_status_css = rfqdetail_status_css
+		obj.Rfqdetail_create = rfqdetail_create
+		obj.Rfqdetail_update = rfqdetail_update
 		arraobj = append(arraobj, obj)
 	})
 
 	if !flag {
-		result, err := models.Fetch_purchaserequestDetail(client.Purchaserequest_id)
+		result, err := models.Fetch_rfqDetail(client.Rfq_id)
 		if err != nil {
 			c.Status(fiber.StatusBadRequest)
 			return c.JSON(fiber.Map{
@@ -213,11 +217,11 @@ func Rfqdetail(c *fiber.Ctx) error {
 				"record":  nil,
 			})
 		}
-		helpers.SetRedis(Fieldpurchaserequest_home_redis+"_"+client.Purchaserequest_id, result, 60*time.Minute)
-		fmt.Println("PURCHASE REQUEST DETAIL MYSQL")
+		helpers.SetRedis(Fieldrfq_home_redis+"_"+client.Rfq_id, result, 60*time.Minute)
+		fmt.Println("RFQ DETAIL MYSQL")
 		return c.JSON(result)
 	} else {
-		fmt.Println("PURCHASE REQUEST DETAIL CACHE")
+		fmt.Println("RFQ DETAIL CACHE")
 		return c.JSON(fiber.Map{
 			"status":  fiber.StatusOK,
 			"message": "Success",
@@ -280,7 +284,7 @@ func RfqSave(c *fiber.Ctx) error {
 }
 func RfqstatusSave(c *fiber.Ctx) error {
 	var errors []*helpers.ErrorResponse
-	client := new(entities.Controller_purchaserequeststatus)
+	client := new(entities.Controller_rfqstatus)
 	validate := validator.New()
 	if err := c.BodyParser(client); err != nil {
 		c.Status(fiber.StatusBadRequest)
@@ -313,9 +317,9 @@ func RfqstatusSave(c *fiber.Ctx) error {
 	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
 
 	// aadmin, idrecord, status string
-	result, err := models.Save_purchaserequestStatus(
+	result, err := models.Save_rfqStatus(
 		client_admin,
-		client.Purchaserequest_id, client.Purchaserequest_status)
+		client.Rfq_id, client.Rfq_status)
 	if err != nil {
 		c.Status(fiber.StatusBadRequest)
 		return c.JSON(fiber.Map{
@@ -325,7 +329,7 @@ func RfqstatusSave(c *fiber.Ctx) error {
 		})
 	}
 
-	_deleteredis_purchaserequest("", client.Purchaserequest_id, 0)
+	_deleteredis_rfq("", client.Rfq_id, 0)
 	return c.JSON(result)
 }
 func _deleteredis_rfq(search, idrfq string, page int) {

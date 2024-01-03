@@ -182,7 +182,7 @@ func Fetch_rfqHome(search string, page int) (helpers.Responserfq, error) {
 
 	return res, nil
 }
-func Fetch_rfqDetail(idpurchaserequest string) (helpers.Response, error) {
+func Fetch_rfqDetail(idrfq string) (helpers.Response, error) {
 	var obj entities.Model_rfqdetail
 	var arraobj []entities.Model_rfqdetail
 	var res helpers.Response
@@ -193,26 +193,32 @@ func Fetch_rfqDetail(idpurchaserequest string) (helpers.Response, error) {
 
 	sql_select := ""
 	sql_select += "SELECT "
-	sql_select += "idrfqdetail, idpurchaserequestdetail, idpurchaserequest, "
-	sql_select += "iditem, nmitem, descitem, "
-	sql_select += "qty, iduom, price, statusrfqdetail,  "
-	sql_select += "createrfqdetail, to_char(COALESCE(createdaterfqdetaildetail,now()), 'YYYY-MM-DD HH24:MI:SS'), "
-	sql_select += "updaterfqdetaildetail, to_char(COALESCE(updatedaterfqdetail,now()), 'YYYY-MM-DD HH24:MI:SS')  "
-	sql_select += "FROM " + database_rfqdetail_local + "   "
-	sql_select += "WHERE idrfq='" + idpurchaserequest + "' "
-	sql_select += "ORDER BY createdaterfqdetaildetail ASC   "
+	sql_select += "A.idrfqdetail, A.idpurchaserequestdetail, A.idpurchaserequest, "
+	sql_select += "C.nmdepartement, B.idemployee, D.nmemployee,  "
+	sql_select += "A.iditem, A.nmitem, A.descitem, "
+	sql_select += "A.qty, A.iduom, A.price, A.statusrfqdetail,  "
+	sql_select += "A.createrfqdetail, to_char(COALESCE(A.createdaterfqdetaildetail,now()), 'YYYY-MM-DD HH24:MI:SS'), "
+	sql_select += "A.updaterfqdetaildetail, to_char(COALESCE(A.updatedaterfqdetail,now()), 'YYYY-MM-DD HH24:MI:SS')  "
+	sql_select += "FROM " + database_rfqdetail_local + " as A   "
+	sql_select += "JOIN " + configs.DB_tbl_trx_purchaserequest + " as B ON B.idpurchaserequest = A.idpurchaserequest   "
+	sql_select += "JOIN " + configs.DB_tbl_mst_departement + " as C ON C.iddepartement = B.iddepartement   "
+	sql_select += "JOIN " + configs.DB_tbl_mst_employee + " as D ON D.idemployee = B.idemployee   "
+	sql_select += "WHERE A.idrfq='" + idrfq + "' "
+	sql_select += "ORDER BY A.createdaterfqdetaildetail ASC   "
 
 	row, err := con.QueryContext(ctx, sql_select)
 	helpers.ErrorCheck(err)
 	for row.Next() {
 		var (
 			idrfqdetail_db, idpurchaserequestdetail_db, idpurchaserequest_db                                   string
+			nmdepartement_db, idemployee_db, nmemployee_db                                                     string
 			iditem_db, nmitem_db, descitem_db, iduom_db, statusrfqdetail_db                                    string
 			qty_db, price_db                                                                                   float64
 			createrfqdetail_db, createdaterfqdetaildetail_db, updaterfqdetaildetail_db, updatedaterfqdetail_db string
 		)
 
 		err = row.Scan(&idrfqdetail_db, &idpurchaserequestdetail_db, &idpurchaserequest_db,
+			&nmdepartement_db, &idemployee_db, &nmemployee_db,
 			&iditem_db, &nmitem_db, &descitem_db,
 			&qty_db, &iduom_db, &price_db, &statusrfqdetail_db,
 			&createrfqdetail_db, &createdaterfqdetaildetail_db, &updaterfqdetaildetail_db, &updatedaterfqdetail_db)
@@ -241,12 +247,14 @@ func Fetch_rfqDetail(idpurchaserequest string) (helpers.Response, error) {
 		obj.Rfqdetail_id = idrfqdetail_db
 		obj.Rfqdetail_idpurchaserequestdetail = idpurchaserequestdetail_db
 		obj.Rfqdetail_idpurchaserequest = idpurchaserequest_db
+		obj.Rfqdetail_nmdepartement = nmdepartement_db
+		obj.Rfqdetail_nmemployee = idemployee_db + " - " + nmemployee_db
 		obj.Rfqdetail_iditem = iditem_db
 		obj.Rfqdetail_nmitem = nmitem_db
 		obj.Rfqdetail_descitem = descitem_db
 		obj.Rfqdetail_iduom = iduom_db
-		obj.Rfqdetail_qty = float32(qty_db)
-		obj.Rfqdetail_price = float32(price_db)
+		obj.Rfqdetail_qty = float64(qty_db)
+		obj.Rfqdetail_price = float64(price_db)
 		obj.Rfqdetail_status = statusrfqdetail_db
 		obj.Rfqdetail_status_css = status_css
 		obj.Rfqdetail_create = create
@@ -332,18 +340,18 @@ func Save_rfqStatus(admin, idrecord, status string) (helpers.Response, error) {
 	status_db := ""
 	total_detail_db := 0
 
-	status_db, total_detail_db = _Get_info_pr(idrecord)
+	status_db, total_detail_db = _Get_info_rfq(idrecord)
 	if status_db == "OPEN" {
 		if total_detail_db > 0 {
 			sql_update := `
 				UPDATE 
-				` + database_purchaserequest_local + `  
-				SET statuspurchaserequest=$1, 
-				updatepurchaserequest=$2, updatedatepurchaserequest=$3     
-				WHERE idpurchaserequest=$4    
+				` + database_rfq_local + `  
+				SET statusrfq=$1, 
+				updaterfq=$2, updatedaterfq=$3     
+				WHERE idrfq=$4    
 			`
 
-			flag_update, msg_update := Exec_SQL(sql_update, database_purchaserequest_local, "UPDATE",
+			flag_update, msg_update := Exec_SQL(sql_update, database_rfq_local, "UPDATE",
 				status,
 				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
 
@@ -352,13 +360,13 @@ func Save_rfqStatus(admin, idrecord, status string) (helpers.Response, error) {
 				//DETAIL
 				sql_updatedetail := `
 					UPDATE 
-					` + database_purchaserequestdetail_local + `  
-					SET statupurchaserequestdetail=$1, 
-					updatepurchaserequestdetail=$2, updatedatepurchaserequestdetail=$3     
-					WHERE idpurchaserequest=$4    
+					` + database_rfqdetail_local + `  
+					SET statusrfqdetail=$1, 
+					updaterfqdetaildetail=$2, updatedaterfqdetail=$3     
+					WHERE idrfq=$4    
 				`
 
-				flag_updatedetail, msg_updatedetail := Exec_SQL(sql_updatedetail, database_purchaserequestdetail_local, "UPDATE",
+				flag_updatedetail, msg_updatedetail := Exec_SQL(sql_updatedetail, database_rfqdetail_local, "UPDATE",
 					status,
 					admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
 
@@ -432,4 +440,37 @@ func Save_rfqdetail(admin, idrecord, idrfq, idpurchaserequestdetail, idpurchaser
 	res.Time = time.Since(render_page).String()
 
 	return res, nil
+}
+func _Get_info_rfq(idrfq string) (string, int) {
+	con := db.CreateCon()
+	ctx := context.Background()
+	status := ""
+	total_detail := 0
+	sql_select := `SELECT
+			statusrfq  
+			FROM ` + database_rfq_local + `  
+			WHERE idrfq='` + idrfq + `'     
+		`
+	row := con.QueryRowContext(ctx, sql_select)
+	switch e := row.Scan(&status); e {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e)
+	}
+
+	sql_selectdetail := `SELECT
+			COUNT(idrfqdetail) AS total 
+			FROM ` + database_rfqdetail_local + `  
+			WHERE idrfq='` + idrfq + `'     
+		`
+	rowdetail := con.QueryRowContext(ctx, sql_selectdetail)
+	switch e := rowdetail.Scan(&total_detail); e {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e)
+	}
+
+	return status, total_detail
 }

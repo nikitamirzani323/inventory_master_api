@@ -96,7 +96,9 @@ func Init() *fiber.App {
 	app.Post("/api/purchaserequestsave", middleware.JWTProtected(), controllers.PurchaserequestSave)
 	app.Post("/api/purchaserequeststatussave", middleware.JWTProtected(), controllers.PurchaserequeststatusSave)
 	app.Post("/api/rfq", middleware.JWTProtected(), controllers.Rfqhome)
+	app.Post("/api/rfqdetail", middleware.JWTProtected(), controllers.Rfqdetail)
 	app.Post("/api/rfqsave", middleware.JWTProtected(), controllers.RfqSave)
+	app.Post("/api/rfqstatussave", middleware.JWTProtected(), controllers.RfqstatusSave)
 
 	return app
 }

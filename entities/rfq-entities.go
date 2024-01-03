@@ -20,12 +20,14 @@ type Model_rfqdetail struct {
 	Rfqdetail_id                      string  `json:"rfqdetail_id"`
 	Rfqdetail_idpurchaserequestdetail string  `json:"rfqdetail_idpurchaserequestdetail"`
 	Rfqdetail_idpurchaserequest       string  `json:"rfqdetail_idpurchaserequest"`
+	Rfqdetail_nmdepartement           string  `json:"rfqdetail_nmdepartement"`
+	Rfqdetail_nmemployee              string  `json:"rfqdetail_nmemployee"`
 	Rfqdetail_iditem                  string  `json:"rfqdetail_iditem"`
 	Rfqdetail_nmitem                  string  `json:"rfqdetail_nmitem"`
 	Rfqdetail_descitem                string  `json:"rfqdetail_descitem"`
-	Rfqdetail_qty                     float32 `json:"rfqdetail_qty"`
+	Rfqdetail_qty                     float64 `json:"rfqdetail_qty"`
 	Rfqdetail_iduom                   string  `json:"rfqdetail_iduom"`
-	Rfqdetail_price                   float32 `json:"rfqdetail_price"`
+	Rfqdetail_price                   float64 `json:"rfqdetail_price"`
 	Rfqdetail_status                  string  `json:"rfqdetail_status"`
 	Rfqdetail_status_css              string  `json:"rfqdetail_status_css"`
 	Rfqdetail_create                  string  `json:"rfqdetail_create"`
@@ -66,9 +68,9 @@ type Controller_rfq struct {
 	Rfq_page   int    `json:"rfq_page"`
 }
 type Controller_rfqdetail struct {
-	Purchaserequest_id string `json:"purchaserequest_id" validate:"required"`
+	Rfq_id string `json:"rfq_id" validate:"required"`
 }
 type Controller_rfqstatus struct {
-	Purchaserequest_id     string `json:"purchaserequest_id" validate:"required"`
-	Purchaserequest_status string `json:"purchaserequest_status" validate:"required"`
+	Rfq_id     string `json:"rfq_id" validate:"required"`
+	Rfq_status string `json:"rfq_status" validate:"required"`
 }
