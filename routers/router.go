@@ -99,6 +99,10 @@ func Init() *fiber.App {
 	app.Post("/api/rfqdetail", middleware.JWTProtected(), controllers.Rfqdetail)
 	app.Post("/api/rfqsave", middleware.JWTProtected(), controllers.RfqSave)
 	app.Post("/api/rfqstatussave", middleware.JWTProtected(), controllers.RfqstatusSave)
+	app.Post("/api/po", middleware.JWTProtected(), controllers.Pohome)
+	app.Post("/api/podetail", middleware.JWTProtected(), controllers.Pohome)
+	app.Post("/api/posave", middleware.JWTProtected(), controllers.Pohome)
+	app.Post("/api/postatussave", middleware.JWTProtected(), controllers.Pohome)
 
 	return app
 }

@@ -22,6 +22,8 @@ const (
 	DB_tbl_trx_purchaserequest_detail string = "tbl_trx_purchaserequest_detail"
 	DB_tbl_trx_rfq                    string = "tbl_trx_rfq"
 	DB_tbl_trx_rfq_detail             string = "tbl_trx_rfq_detail"
+	DB_tbl_trx_po                     string = "tbl_trx_po"
+	DB_tbl_trx_po_detail              string = "tbl_trx_po_detail"
 	DB_view_tbl_item_purchase         string = "view_tbl_item_purchase"
 	DB_view_tbl_pr                    string = "view_tbl_pr"
 
