@@ -329,7 +329,7 @@ func Save_po(admin, idrecord, idrfq, listdetail, sData string, discount, ppn, pp
 				`
 
 				flag_update, msg_update := Exec_SQL(sql_update, database_po_local, "UPDATE",
-					total_item, subtotalpr,
+					total_item, subtotal, grandtotal,
 					admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
 
 				if flag_update {
@@ -368,7 +368,7 @@ func Save_po(admin, idrecord, idrfq, listdetail, sData string, discount, ppn, pp
 				`
 
 			flag_update, msg_update := Exec_SQL(sql_update, database_po_local, "UPDATE",
-				total_item, subtotalpr,
+				total_item, subtotal, grandtotal,
 				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
 
 			if flag_update {
