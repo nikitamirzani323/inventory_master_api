@@ -341,27 +341,30 @@ func Fetch_prdetail_view(idbranch, tipedoc string) (helpers.Response, error) {
 		case "CANCEL":
 			status_css = configs.STATUS_CANCEL
 		}
+		total := qty_db - qty_po_db
+		if total > 0 {
+			obj.Prdetailview_id = idpurchaserequestdetail_db
+			obj.Prdetailview_idpurchaserequest = idpurchaserequest_db
+			obj.Prdetailview_date = createdatepurchaserequest_db
+			obj.Prdetailview_tipedoc = tipe_document_db
+			obj.Prdetailview_nmbranch = nmbranch_db
+			obj.Prdetailview_nmdepartement = nmdepartement_db
+			obj.Prdetailview_nmemployee = idemployee_db + " - " + nmemployee_db
+			obj.Prdetailview_idcurr = idcurr_db
+			obj.Prdetailview_iditem = iditem_db
+			obj.Prdetailview_nmitem = nmitem_db
+			obj.Prdetailview_descitem = descitem_db
+			obj.Prdetailview_purpose = purpose_db
+			obj.Prdetailview_iduom = iduom_db
+			obj.Prdetailview_qty = float32(qty_db)
+			obj.Prdetailview_qty_po = float32(qty_po_db)
+			obj.Prdetailview_price = float32(estimateprice_db)
+			obj.Prdetailview_status = statuspurchaserequest_db
+			obj.Prdetailview_status_css = status_css
+			arraobj = append(arraobj, obj)
+			msg = "Success"
+		}
 
-		obj.Prdetailview_id = idpurchaserequestdetail_db
-		obj.Prdetailview_idpurchaserequest = idpurchaserequest_db
-		obj.Prdetailview_date = createdatepurchaserequest_db
-		obj.Prdetailview_tipedoc = tipe_document_db
-		obj.Prdetailview_nmbranch = nmbranch_db
-		obj.Prdetailview_nmdepartement = nmdepartement_db
-		obj.Prdetailview_nmemployee = idemployee_db + " - " + nmemployee_db
-		obj.Prdetailview_idcurr = idcurr_db
-		obj.Prdetailview_iditem = iditem_db
-		obj.Prdetailview_nmitem = nmitem_db
-		obj.Prdetailview_descitem = descitem_db
-		obj.Prdetailview_purpose = purpose_db
-		obj.Prdetailview_iduom = iduom_db
-		obj.Prdetailview_qty = float32(qty_db)
-		obj.Prdetailview_qty_po = float32(qty_po_db)
-		obj.Prdetailview_price = float32(estimateprice_db)
-		obj.Prdetailview_status = statuspurchaserequest_db
-		obj.Prdetailview_status_css = status_css
-		arraobj = append(arraobj, obj)
-		msg = "Success"
 	}
 	defer row.Close()
 
@@ -677,4 +680,27 @@ func _Get_info_pr(idpurchaserequest string) (string, int) {
 	}
 
 	return status, total_detail
+}
+func _Get_info_prdetail(idpr, idprdetail string) float64 {
+	con := db.CreateCon()
+	ctx := context.Background()
+	qty_db := 0
+	qty_po_db := 0
+	qty := 0
+	sql_select := `SELECT
+			qty, qty_po  
+			FROM ` + database_purchaserequestdetail_local + `  
+			WHERE idpurchaserequest='` + idpr + `'     
+			AND  idpurchaserequestdetail='` + idprdetail + `'     
+		`
+	row := con.QueryRowContext(ctx, sql_select)
+	switch e := row.Scan(&qty_db, &qty_po_db); e {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e)
+	}
+	qty = qty_db - qty_po_db
+
+	return float64(qty)
 }

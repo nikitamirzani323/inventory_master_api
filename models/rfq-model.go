@@ -528,36 +528,41 @@ func Save_rfqdetail(admin, idrecord, idrfq, idpurchaserequestdetail, idpurchaser
 	if sData == "New" {
 		flag = CheckDBTwoField(database_rfqdetail_local, "idrfq", idrfq, "idpurchaserequestdetail", idpurchaserequestdetail)
 		if !flag {
-			sql_insert := `
-				insert into
-				` + database_rfqdetail_local + ` (
-					idrfqdetail, idrfq, 
-					idpurchaserequestdetail, idpurchaserequest,  
-					iditem , nmitem, descitem,  
-					qty , iduom, price,  statusrfqdetail,
-					createrfqdetail, createdaterfqdetaildetail 
-				) values (
-					$1, $2, 
-					$3, $4, 
-					$5, $6, $7, 
-					$8, $9, $10, $11,    
-					$12, $13  
-				)
-			`
-			field_column := database_rfqdetail_local + tglnow.Format("YYYY")
-			idrecord_counter := Get_counter(field_column)
-			idrecord := "RFQDETAIL_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
-			flag_insert, msg_insert := Exec_SQL(sql_insert, database_rfqdetail_local, "INSERT",
-				idrecord, idrfq,
-				idpurchaserequestdetail, idpurchaserequest,
-				iditem, nmitem, descpitem,
-				qty, iduom, price, status,
-				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
+			qty_total := _Get_info_prdetail(idpurchaserequest, idpurchaserequestdetail)
+			if qty < qty_total {
+				sql_insert := `
+					insert into
+					` + database_rfqdetail_local + ` (
+						idrfqdetail, idrfq, 
+						idpurchaserequestdetail, idpurchaserequest,  
+						iditem , nmitem, descitem,  
+						qty , iduom, price,  statusrfqdetail,
+						createrfqdetail, createdaterfqdetaildetail 
+					) values (
+						$1, $2, 
+						$3, $4, 
+						$5, $6, $7, 
+						$8, $9, $10, $11,    
+						$12, $13  
+					)
+				`
+				field_column := database_rfqdetail_local + tglnow.Format("YYYY")
+				idrecord_counter := Get_counter(field_column)
+				idrecord := "RFQDETAIL_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
+				flag_insert, msg_insert := Exec_SQL(sql_insert, database_rfqdetail_local, "INSERT",
+					idrecord, idrfq,
+					idpurchaserequestdetail, idpurchaserequest,
+					iditem, nmitem, descpitem,
+					qty, iduom, price, status,
+					admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
-			if flag_insert {
-				msg = "Succes"
+				if flag_insert {
+					msg = "Succes"
+				} else {
+					fmt.Println(msg_insert)
+				}
 			} else {
-				fmt.Println(msg_insert)
+				msg = "Qty exceeds Purchase Qty"
 			}
 		} else {
 			msg = "Duplicate Entry"
