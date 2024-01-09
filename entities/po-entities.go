@@ -46,10 +46,11 @@ type Controller_posave struct {
 	Po_page       int     `json:"po_page"`
 	Po_id         string  `json:"po_id"`
 	Po_idrfq      string  `json:"po_idrfq" validate:"required"`
-	Po_listdetail string  `json:"po_listdetail" validate:"required"`
 	Po_discount   float64 `json:"po_discount"`
-	Po_ppn        float64 `json:"po_ppn" validate:"required"`
-	Po_pph        float64 `json:"po_pph" validate:"required"`
+	Po_ppn        float64 `json:"po_ppn" `
+	Po_pph        float64 `json:"po_pph" `
+	Po_ppn_total  float64 `json:"po_ppn_total" `
+	Po_pph_total  float64 `json:"po_pph_total" `
 	Po_totalitem  float64 `json:"po_totalitem" validate:"required"`
 	Po_subtotal   float64 `json:"po_subtotal" validate:"required"`
 	Po_grandtotal float64 `json:"po_grandtotal" validate:"required"`

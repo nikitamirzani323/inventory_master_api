@@ -4,12 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/buger/jsonparser"
 	"github.com/gofiber/fiber/v2"
 	"github.com/nikitamirzani323/BTANGKAS_SUPER_API/configs"
 	"github.com/nikitamirzani323/BTANGKAS_SUPER_API/db"
@@ -229,7 +227,7 @@ func Fetch_poDetail(idrfq string) (helpers.Response, error) {
 
 	return res, nil
 }
-func Save_po(admin, idrecord, idrfq, listdetail, sData string, discount, ppn, pph, total_item, subtotal, grandtotal float32) (helpers.Response, error) {
+func Save_po(admin, idrecord, idrfq, sData string, discount, ppn, pph, ppn_total, pph_total, total_item, subtotal, grandtotal float64) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
 	con := db.CreateCon()
@@ -243,13 +241,13 @@ func Save_po(admin, idrecord, idrfq, listdetail, sData string, discount, ppn, pp
 		idcurr_rfq := ""
 		tipedoc_rfq := ""
 
-		sql_select := `SELECT
+		sql_rfq := `SELECT
 		 	idbranch, idvendor, idcurr, tipe_documentrfq   
 			FROM ` + configs.DB_tbl_trx_rfq + `  
 			WHERE idrfq='` + idrfq + `'     
 		`
-		row := con.QueryRowContext(ctx, sql_select)
-		switch e := row.Scan(&idbranch_rfq, &idvendor_rfq, &idcurr_rfq, &tipedoc_rfq); e {
+		row_rfq := con.QueryRowContext(ctx, sql_rfq)
+		switch e := row_rfq.Scan(&idbranch_rfq, &idvendor_rfq, &idcurr_rfq, &tipedoc_rfq); e {
 		case sql.ErrNoRows:
 		case nil:
 		default:
@@ -260,14 +258,18 @@ func Save_po(admin, idrecord, idrfq, listdetail, sData string, discount, ppn, pp
 				insert into
 				` + database_po_local + ` (
 					idrfq , idbranch, idvendor, idcurr,  
-					po_discount, po_ppn, po_pph, po_totalitem, po_subtotal, po_grandtotal,
+					po_discount, po_ppn, po_pph, 
+					po_ppn_total, po_pph_total, 
+					po_totalitem, po_subtotal, po_grandtotal,
 					tipe_docpo , statuspo,
 					createpo, createdatepo 
 				) values (
 					$1, $2, $3, $4,     
-					$5, $6, $7, $8, $9, $10, 
-					$11, $12, 
-					$13, $14
+					$5, $6, $7,
+					$8, $9, 
+					$10, $11, $12, 
+					$13, $14,
+					$15, $16 
 				)
 			`
 
@@ -277,123 +279,52 @@ func Save_po(admin, idrecord, idrfq, listdetail, sData string, discount, ppn, pp
 		start_date := tglnow.Format("YYYY-MM-DD HH:mm:ss")
 		flag_insert, msg_insert := Exec_SQL(sql_insert, database_po_local, "INSERT",
 			idrecord, idbranch_rfq, idvendor_rfq, idcurr_rfq,
-			discount, ppn, pph, total_item, subtotal, grandtotal,
+			discount, ppn, pph,
+			ppn_total, pph_total,
+			total_item, subtotal, grandtotal,
 			tipedoc_rfq, "OPEN",
 			admin, start_date)
 
 		if flag_insert {
 			msg = "Succes"
 
-			json := []byte(listdetail)
-			jsonparser.ArrayEach(json, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-				detail_id, _ := jsonparser.GetString(value, "detail_id")
-				detail_document, _ := jsonparser.GetString(value, "detail_document")
-				detail_iditem, _ := jsonparser.GetString(value, "detail_iditem")
-				detail_nmitem, _ := jsonparser.GetString(value, "detail_nmitem")
-				detail_descpitem, _ := jsonparser.GetString(value, "detail_descpitem")
-				detail_iduom, _ := jsonparser.GetString(value, "detail_iduom")
-				detail_qty, _ := jsonparser.GetFloat(value, "detail_qty")
-				detail_price, _ := jsonparser.GetFloat(value, "detail_price")
+			sql_rfqdetail := `SELECT 
+				idrfqdetail , idpurchaserequestdetail, idpurchaserequest, 
+				iditem , nmitem, descitem, 
+				qty , iduom, price 
+				FROM ` + configs.DB_tbl_trx_rfq_detail + `  
+				WHERE idrfq='` + idrfq + `'  
+				AND statusrfqdetail='PROCESS' 
+				ORDER BY createdaterfqdetaildetail ASC   `
 
-				//admin, idrecord, idrfq, idpurchaserequestdetail, idpurchaserequest, iditem, nmitem, descpitem, iduom, status, sData string, qty, price float64
-				Save_podetail(admin, "", idrecord,
-					detail_id, detail_document,
-					detail_iditem, detail_nmitem, detail_descpitem, detail_iduom,
-					"OPEN", "New", detail_qty, detail_price)
-			})
+			row_rfqdetail, err_rfqdetail := con.QueryContext(ctx, sql_rfqdetail)
+			helpers.ErrorCheck(err_rfqdetail)
+			for row_rfqdetail.Next() {
+				var (
+					idrfqdetail_db, idpurchaserequestdetail_db, idpurchaserequest_db string
+					iditem_db, nmitem_db, descitem_db, iduom_db                      string
+					qty_db, price_db                                                 float64
+				)
+
+				err_rfqdetail = row_rfqdetail.Scan(&idrfqdetail_db, &idpurchaserequestdetail_db, &idpurchaserequest_db,
+					&iditem_db, &nmitem_db, &descitem_db,
+					&qty_db, &iduom_db, &price_db)
+
+				_, iddepartement, idemployee, _ := _Get_info_pr(idpurchaserequest_db)
+
+				//admin, idrecord, idpo, idrfqdetail, idrfq, idpurchaserequestdetail, idpurchaserequest,
+				// iddepartement, idemployee, iditem, nmitem, descpitem, iduom, status, sData string,
+				// qty, price float64
+				Save_podetail(admin, "", idrecord, idrfqdetail_db, idrfq,
+					idpurchaserequestdetail_db, idpurchaserequest_db, iddepartement, idemployee,
+					iditem_db, nmitem_db, descitem_db, iduom_db,
+					"OPEN", "New", qty_db, price_db)
+
+			}
+			defer row_rfqdetail.Close()
+
 		} else {
 			fmt.Println(msg_insert)
-		}
-	} else {
-		_, totaldetail_db := _Get_info_po(idrecord)
-		log.Println("total : ", totaldetail_db)
-		log.Println("data : ", listdetail)
-		if totaldetail_db > 0 {
-			sql_delete := `
-				DELETE FROM  
-				` + database_podetail_local + `   
-				WHERE idpo=$1  
-			`
-
-			flag_delete, msg_delete := Exec_SQL(sql_delete, database_podetail_local, "DELETE", idrecord)
-
-			if flag_delete {
-				msg = "Succes"
-				//UPDATE
-				sql_update := `
-					UPDATE 
-					` + database_po_local + `  
-					SET po_totalitem=$1, po_subtotal=$2, po_grandtotal=$3, 
-					updatepo=$4, updatedatepo=$5          
-					WHERE idpo=$6        
-				`
-
-				flag_update, msg_update := Exec_SQL(sql_update, database_po_local, "UPDATE",
-					total_item, subtotal, grandtotal,
-					admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
-
-				if flag_update {
-					msg = "Succes"
-
-					json := []byte(listdetail)
-					jsonparser.ArrayEach(json, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-						detail_id, _ := jsonparser.GetString(value, "detail_id")
-						detail_document, _ := jsonparser.GetString(value, "detail_document")
-						detail_iditem, _ := jsonparser.GetString(value, "detail_iditem")
-						detail_nmitem, _ := jsonparser.GetString(value, "detail_nmitem")
-						detail_descpitem, _ := jsonparser.GetString(value, "detail_descpitem")
-						detail_iduom, _ := jsonparser.GetString(value, "detail_iduom")
-						detail_qty, _ := jsonparser.GetFloat(value, "detail_qty")
-						detail_price, _ := jsonparser.GetFloat(value, "detail_price")
-
-						//admin, idrecord, idrfq, idpurchaserequestdetail, idpurchaserequest, iditem, nmitem, descpitem, iduom, status, sData string, qty, price float64
-						Save_podetail(admin, "", idrecord,
-							detail_id, detail_document,
-							detail_iditem, detail_nmitem, detail_descpitem, detail_iduom,
-							"OPEN", "New", detail_qty, detail_price)
-					})
-				} else {
-					fmt.Println(msg_update)
-				}
-			} else {
-				fmt.Println(msg_delete)
-			}
-		} else {
-			sql_update := `
-					UPDATE 
-					` + database_po_local + `  
-					SET po_totalitem=$1, po_subtotal=$2, po_grandtotal=$3, 
-					updatepo=$4, updatedatepo=$5          
-					WHERE idpo=$6        
-				`
-
-			flag_update, msg_update := Exec_SQL(sql_update, database_po_local, "UPDATE",
-				total_item, subtotal, grandtotal,
-				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
-
-			if flag_update {
-				msg = "Succes"
-
-				json := []byte(listdetail)
-				jsonparser.ArrayEach(json, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-					detail_id, _ := jsonparser.GetString(value, "detail_id")
-					detail_document, _ := jsonparser.GetString(value, "detail_document")
-					detail_iditem, _ := jsonparser.GetString(value, "detail_iditem")
-					detail_nmitem, _ := jsonparser.GetString(value, "detail_nmitem")
-					detail_descpitem, _ := jsonparser.GetString(value, "detail_descpitem")
-					detail_iduom, _ := jsonparser.GetString(value, "detail_iduom")
-					detail_qty, _ := jsonparser.GetFloat(value, "detail_qty")
-					detail_price, _ := jsonparser.GetFloat(value, "detail_price")
-
-					//admin, idrecord, idrfq, idpurchaserequestdetail, idpurchaserequest, iditem, nmitem, descpitem, iduom, status, sData string, qty, price float64
-					Save_podetail(admin, "", idrecord,
-						detail_id, detail_document,
-						detail_iditem, detail_nmitem, detail_descpitem, detail_iduom,
-						"OPEN", "New", detail_qty, detail_price)
-				})
-			} else {
-				fmt.Println(msg_update)
-			}
 		}
 	}
 
@@ -498,7 +429,7 @@ func Save_poStatus(admin, idrecord, status string) (helpers.Response, error) {
 
 	return res, nil
 }
-func Save_podetail(admin, idrecord, idrfq, idpurchaserequestdetail, idpurchaserequest, iditem, nmitem, descpitem, iduom, status, sData string, qty, price float64) (helpers.Response, error) {
+func Save_podetail(admin, idrecord, idpo, idrfqdetail, idrfq, idpurchaserequestdetail, idpurchaserequest, iddepartement, idemployee, iditem, nmitem, descpitem, iduom, status, sData string, qty, price float64) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
 	tglnow, _ := goment.New()
@@ -511,25 +442,25 @@ func Save_podetail(admin, idrecord, idrfq, idpurchaserequestdetail, idpurchasere
 			sql_insert := `
 				insert into
 				` + database_podetail_local + ` (
-					idrfqdetail, idrfq, 
-					idpurchaserequestdetail, idpurchaserequest,  
+					idpodetail, idpo, idrfqdetail, idrfq, 
+					idpurchaserequestdetail, idpurchaserequest, iddepartement, idemployee,  
 					iditem , nmitem, descitem,  
-					qty , iduom, price,  statusrfqdetail,
-					createrfqdetail, createdaterfqdetaildetail 
+					qty , iduom, price,  statuspodetail,
+					createpodetail, createdaterpodetail 
 				) values (
-					$1, $2, 
-					$3, $4, 
-					$5, $6, $7, 
-					$8, $9, $10, $11,    
-					$12, $13  
+					$1, $2, $3, $4,
+					$5, $6, $7, $8, 
+					$9, $10, $11,
+					$12, $13, $14, $15,    
+					$16, $17   
 				)
 			`
 			field_column := database_podetail_local + tglnow.Format("YYYY")
 			idrecord_counter := Get_counter(field_column)
 			idrecord := "PODETAIL_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
 			flag_insert, msg_insert := Exec_SQL(sql_insert, database_podetail_local, "INSERT",
-				idrecord, idrfq,
-				idpurchaserequestdetail, idpurchaserequest,
+				idrecord, idpo, idrfqdetail, idrfq,
+				idpurchaserequestdetail, idpurchaserequest, iddepartement, idemployee,
 				iditem, nmitem, descpitem,
 				qty, iduom, price, status,
 				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))

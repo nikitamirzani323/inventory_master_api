@@ -430,7 +430,7 @@ func Save_purchaserequest(admin, idrecord, idbranch, iddepartement, idemployee, 
 			fmt.Println(msg_insert)
 		}
 	} else {
-		_, totaldetail_db := _Get_info_pr(idrecord)
+		_, _, _, totaldetail_db := _Get_info_pr(idrecord)
 		if totaldetail_db > 0 {
 			sql_delete := `
 				DELETE FROM  
@@ -530,7 +530,7 @@ func Save_purchaserequestStatus(admin, idrecord, status string) (helpers.Respons
 	status_db := ""
 	total_detail_db := 0
 
-	status_db, total_detail_db = _Get_info_pr(idrecord)
+	status_db, _, _, total_detail_db = _Get_info_pr(idrecord)
 	if status_db == "OPEN" {
 		if total_detail_db > 0 {
 			sql_update := `
@@ -648,18 +648,20 @@ func Save_purchaserequestdetail(admin, idrecord, idpurchaserequest, iditem, nmit
 
 	return res, nil
 }
-func _Get_info_pr(idpurchaserequest string) (string, int) {
+func _Get_info_pr(idpurchaserequest string) (string, string, string, int) {
 	con := db.CreateCon()
 	ctx := context.Background()
+	iddepartement := ""
+	idemployee := ""
 	status := ""
 	total_detail := 0
 	sql_select := `SELECT
-			statuspurchaserequest  
+			iddepartement,idemployee,statuspurchaserequest  
 			FROM ` + database_purchaserequest_local + `  
 			WHERE idpurchaserequest='` + idpurchaserequest + `'     
 		`
 	row := con.QueryRowContext(ctx, sql_select)
-	switch e := row.Scan(&status); e {
+	switch e := row.Scan(&iddepartement, &idemployee, &status); e {
 	case sql.ErrNoRows:
 	case nil:
 	default:
@@ -679,7 +681,7 @@ func _Get_info_pr(idpurchaserequest string) (string, int) {
 		helpers.ErrorCheck(e)
 	}
 
-	return status, total_detail
+	return status, iddepartement, idemployee, total_detail
 }
 func _Get_info_prdetail(idpr, idprdetail string) float64 {
 	con := db.CreateCon()
