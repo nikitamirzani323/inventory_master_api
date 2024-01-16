@@ -257,19 +257,19 @@ func Save_po(admin, idrecord, idrfq, sData string, discount, ppn, pph, ppn_total
 		sql_insert := `
 				insert into
 				` + database_po_local + ` (
-					idrfq , idbranch, idvendor, idcurr,  
+					idpo, idrfq , idbranch, idvendor, idcurr,  
 					po_discount, po_ppn, po_pph, 
 					po_ppn_total, po_pph_total, 
 					po_totalitem, po_subtotal, po_grandtotal,
 					tipe_docpo , statuspo,
 					createpo, createdatepo 
 				) values (
-					$1, $2, $3, $4,     
-					$5, $6, $7,
-					$8, $9, 
-					$10, $11, $12, 
-					$13, $14,
-					$15, $16 
+					$1, $2, $3, $4, $5,    
+					$6, $7, $8,
+					$9, $10, 
+					$11, $12, $13, 
+					$14, $15,
+					$16, $17 
 				)
 			`
 
@@ -278,7 +278,7 @@ func Save_po(admin, idrecord, idrfq, sData string, discount, ppn, pph, ppn_total
 		idrecord := "PO_" + tglnow.Format("YY") + tglnow.Format("MM") + tglnow.Format("DD") + tglnow.Format("HH") + strconv.Itoa(idrecord_counter)
 		start_date := tglnow.Format("YYYY-MM-DD HH:mm:ss")
 		flag_insert, msg_insert := Exec_SQL(sql_insert, database_po_local, "INSERT",
-			idrecord, idbranch_rfq, idvendor_rfq, idcurr_rfq,
+			idrecord, idrfq, idbranch_rfq, idvendor_rfq, idcurr_rfq,
 			discount, ppn, pph,
 			ppn_total, pph_total,
 			total_item, subtotal, grandtotal,
@@ -514,4 +514,24 @@ func _Get_info_po(idpo string) (string, int) {
 	}
 
 	return status, total_detail
+}
+func _Get_info_idpo(idrfq string) string {
+	con := db.CreateCon()
+	ctx := context.Background()
+	idpo := ""
+	sql_select := `SELECT
+			idpo  
+			FROM ` + database_po_local + `  
+			WHERE idrfq='` + idrfq + `'     
+			AND statuspo !='CANCEL'     
+		`
+	row := con.QueryRowContext(ctx, sql_select)
+	switch e := row.Scan(&idpo); e {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e)
+	}
+
+	return idpo
 }

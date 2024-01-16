@@ -3,6 +3,7 @@ package entities
 type Model_rfq struct {
 	Rfq_id         string  `json:"rfq_id"`
 	Rfq_date       string  `json:"rfq_date"`
+	Rfq_idpo       string  `json:"rfq_idpo"`
 	Rfq_idbranch   string  `json:"rfq_idbranch"`
 	Rfq_idvendor   string  `json:"rfq_idvendor"`
 	Rfq_idcurr     string  `json:"rfq_idcurr"`

@@ -221,7 +221,7 @@ func Podetail(c *fiber.Ctx) error {
 }
 func PoSave(c *fiber.Ctx) error {
 	var errors []*helpers.ErrorResponse
-	client := new(entities.Controller_rfqsave)
+	client := new(entities.Controller_posave)
 	validate := validator.New()
 	if err := c.BodyParser(client); err != nil {
 		c.Status(fiber.StatusBadRequest)
@@ -253,12 +253,12 @@ func PoSave(c *fiber.Ctx) error {
 	temp_decp := helpers.Decryption(name)
 	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
 
-	// admin, idrecord, idbranch, idvendor, idcurr, tipedoc, listdetail, sData string, total_item, subtotalpr float32
-	result, err := models.Save_rfq(
+	// admin, idrecord, idrfq, sData string, discount, ppn, pph, ppn_total, pph_total, total_item, subtotal, grandtotal float64
+	result, err := models.Save_po(
 		client_admin,
-		client.Rfq_id, client.Rfq_idbranch, client.Rfq_idvendor, client.Rfq_idcurr, client.Rfq_tipedoc,
-		client.Rfq_listdetail, client.Sdata,
-		client.Rfq_totalitem, client.Rfq_subtotal)
+		client.Po_id, client.Po_idrfq, client.Sdata,
+		client.Po_discount, client.Po_ppn, client.Po_pph,
+		client.Po_ppn_total, client.Po_pph_total, client.Po_totalitem, client.Po_subtotal, client.Po_grandtotal)
 	if err != nil {
 		c.Status(fiber.StatusBadRequest)
 		return c.JSON(fiber.Map{
@@ -268,7 +268,7 @@ func PoSave(c *fiber.Ctx) error {
 		})
 	}
 
-	_deleteredis_po(client.Rfq_search, client.Rfq_id, client.Rfq_page)
+	_deleteredis_po(client.Po_search, client.Po_id, client.Po_page)
 	return c.JSON(result)
 }
 func PostatusSave(c *fiber.Ctx) error {

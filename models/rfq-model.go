@@ -108,6 +108,7 @@ func Fetch_rfqHome(search string, page int) (helpers.Responserfq, error) {
 		}
 
 		obj.Rfq_id = idrfq_db
+		obj.Rfq_idpo = _Get_info_idpo(idrfq_db)
 		obj.Rfq_date = createdaterfq_db
 		obj.Rfq_idbranch = idbranch_db
 		obj.Rfq_idvendor = idvendor_db

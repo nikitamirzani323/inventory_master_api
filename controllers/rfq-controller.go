@@ -67,6 +67,7 @@ func Rfqhome(c *fiber.Ctx) error {
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		rfq_id, _ := jsonparser.GetString(value, "rfq_id")
 		rfq_date, _ := jsonparser.GetString(value, "rfq_date")
+		rfq_idpo, _ := jsonparser.GetString(value, "rfq_idpo")
 		rfq_idbranch, _ := jsonparser.GetString(value, "rfq_idbranch")
 		rfq_idvendor, _ := jsonparser.GetString(value, "rfq_idvendor")
 		rfq_idcurr, _ := jsonparser.GetString(value, "rfq_idcurr")
@@ -81,6 +82,7 @@ func Rfqhome(c *fiber.Ctx) error {
 		rfq_update, _ := jsonparser.GetString(value, "rfq_update")
 
 		obj.Rfq_id = rfq_id
+		obj.Rfq_idpo = rfq_idpo
 		obj.Rfq_date = rfq_date
 		obj.Rfq_idbranch = rfq_idbranch
 		obj.Rfq_idvendor = rfq_idvendor
